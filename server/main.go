@@ -5,8 +5,10 @@ import (
 	"log"
 	"os"
 	"server/internal/config"
-	"server/internal/entity"
-	"server/internal/route"
+	"server/internal/infrastructure/controllers"
+	"server/internal/infrastructure/repository"
+	"server/internal/infrastructure/routes"
+	"server/internal/application/usecases"
 )
 
 var ROOT_FOLDER string
@@ -24,15 +26,41 @@ func init() {
 }
 
 func main() {
+	// Initialisation de la base de données
 	db := config.DatabaseConnex()
-	if err := db.AutoMigrate(&entity.Reservation{}); err != nil {
+	if err := db.AutoMigrate(&repository.ReservationModel{}); err != nil {
 		log.Fatalf("Failed to migrate reservation schema: %v", err)
 	}
 
+	// Initialisation des repositories (couche infrastructure)
+	reservationRepo := repository.NewGormReservationRepository(db)
+	userRepo := repository.NewGormUserRepository(db)
+
+	// Initialisation des use cases (couche application)
+	createReservationUC := usecases.NewCreateReservationUseCase(reservationRepo)
+	listReservationsUC := usecases.NewListReservationsUseCase(reservationRepo)
+	updateReservationUC := usecases.NewUpdateReservationUseCase(reservationRepo)
+	deleteReservationUC := usecases.NewDeleteReservationUseCase(reservationRepo)
+	loginUC := usecases.NewLoginUseCase(userRepo)
+
+	// Initialisation des contrôleurs (couche infrastructure/interface adapters)
+	reservationCtrl := controllers.NewReservationController(
+		createReservationUC,
+		listReservationsUC,
+		updateReservationUC,
+		deleteReservationUC,
+	)
+	authCtrl := controllers.NewAuthController(loginUC)
+
+	// Initialisation du routeur
+	router := routes.NewRouter(reservationCtrl, authCtrl)
+
+	// Configuration de l'adresse API
 	apiAddress := fmt.Sprintf("%s:%d", config.AppConfiguration.API.Host, config.AppConfiguration.API.Port)
 	if apiAddress == "" {
 		log.Printf("EMPTY API_ADRESSSE: %s\n", apiAddress)
 	}
 
-	route.SetupRouter(apiAddress)
+	// Démarrage du serveur
+	router.SetupRouter(apiAddress)
 }
