@@ -1,0 +1,14 @@
+JWT:
+  SECRET_KEY: x12rNNe_S4Rw0WtzQ1Ec2z5JQNAHlkiG86NLOsY6ECRVtSADc=
+  TOKEN_EXPIRE: 365d
+
+API:
+  HOST: localhost
+  PORT: 8081
+  ALLOW_ORIGINS:
+    - http://localhost:4200
+    - http://localhost:4202
+    - http://localhost:8080
+    - http://localhost:8081
+
+DB_DSN: root:@tcp(localhost:3306)/admin-dashboard?parseTime=true&loc=Local

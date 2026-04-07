@@ -1,0 +1,2850 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AeroAdmin — Gestion des Réservations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== RESET & BASE ===== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --ink: #0c0e14;
+        --ink-2: #161923;
+        --ink-3: #1e2230;
+        --ink-4: #2a2f42;
+        --mist: #8891a8;
+        --mist-2: #c4cad9;
+        --white: #f4f3ef;
+        --gold: #c9a84c;
+        --gold-2: #e8c96a;
+        --gold-dim: rgba(201, 168, 76, 0.15);
+        --gold-glow: rgba(201, 168, 76, 0.35);
+        --ruby: #c0414a;
+        --ruby-dim: rgba(192, 65, 74, 0.15);
+        --jade: #3a9e7c;
+        --jade-dim: rgba(58, 158, 124, 0.15);
+        --sky: #3b82c4;
+        --sky-dim: rgba(59, 130, 196, 0.15);
+        --radius: 10px;
+        --shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+        --trans: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      html {
+        height: 100%;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        background: var(--ink);
+        color: var(--white);
+        min-height: 100%;
+        overflow-x: hidden;
+      }
+
+      /* ===== UTILITY ===== */
+      .hidden {
+        display: none !important;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+      }
+
+      /* ===== PAGES ===== */
+      .page {
+        display: none;
+        min-height: 100vh;
+      }
+      .page.active {
+        display: flex;
+      }
+
+      /* ============================
+     PAGE 1 — LOGIN
+  ============================ */
+      #page-login {
+        align-items: center;
+        justify-content: center;
+        background: var(--ink);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* animated background */
+      #page-login::before {
+        content: "";
+        position: absolute;
+        inset: -50%;
+        background:
+          radial-gradient(
+            ellipse 60% 50% at 30% 40%,
+            rgba(201, 168, 76, 0.12) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 50% 60% at 70% 70%,
+            rgba(59, 130, 196, 0.08) 0%,
+            transparent 60%
+          );
+        animation: drift 18s ease-in-out infinite alternate;
+      }
+      @keyframes drift {
+        0% {
+          transform: translate(0, 0) rotate(0deg);
+        }
+        100% {
+          transform: translate(3%, 2%) rotate(2deg);
+        }
+      }
+
+      /* grid lines */
+      #page-login::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(201, 168, 76, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(201, 168, 76, 0.04) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      .login-card {
+        position: relative;
+        z-index: 2;
+        width: 420px;
+        background: var(--ink-2);
+        border: 1px solid rgba(201, 168, 76, 0.2);
+        border-radius: 16px;
+        padding: 52px 48px;
+        box-shadow:
+          0 24px 80px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(255, 255, 255, 0.03);
+        animation: rise 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .login-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 36px;
+      }
+      .login-logo svg {
+        width: 36px;
+        height: 36px;
+      }
+      .login-logo-text {
+        display: flex;
+        flex-direction: column;
+      }
+      .login-logo-text span:first-child {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        color: var(--gold);
+      }
+      .login-logo-text span:last-child {
+        font-size: 10px;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--mist);
+      }
+
+      .login-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 1.2;
+        margin-bottom: 8px;
+      }
+      .login-subtitle {
+        font-size: 13px;
+        color: var(--mist);
+        margin-bottom: 36px;
+        letter-spacing: 0.01em;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-label {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--mist);
+        margin-bottom: 8px;
+        font-weight: 400;
+      }
+      .form-input {
+        width: 100%;
+        padding: 13px 16px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        border-radius: var(--radius);
+        color: var(--white);
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 300;
+        transition:
+          border-color var(--trans),
+          box-shadow var(--trans);
+        outline: none;
+      }
+      .form-input:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px var(--gold-dim);
+      }
+      .form-input::placeholder {
+        color: var(--ink-4);
+      }
+
+      .input-icon-wrap {
+        position: relative;
+      }
+      .input-icon-wrap .form-input {
+        padding-left: 44px;
+      }
+      .input-icon-wrap .icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--mist);
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+      }
+
+      .btn-primary {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-2));
+        color: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition:
+          opacity var(--trans),
+          transform var(--trans),
+          box-shadow var(--trans);
+        margin-top: 8px;
+        box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 30px rgba(201, 168, 76, 0.45);
+      }
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      .login-footer {
+        margin-top: 28px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--ink-4);
+        letter-spacing: 0.03em;
+      }
+
+      .login-error {
+        background: var(--ruby-dim);
+        border: 1px solid rgba(192, 65, 74, 0.3);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #f08086;
+        margin-bottom: 16px;
+      }
+
+      /* ============================
+     LAYOUT — authenticated pages
+  ============================ */
+      .app-shell {
+        display: flex;
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      /* SIDEBAR */
+      .sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        background: var(--ink-2);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 28px 24px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .sidebar-logo svg {
+        width: 28px;
+        height: 28px;
+      }
+      .sidebar-logo-text {
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar-logo-text span:first-child {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--gold);
+      }
+      .sidebar-logo-text span:last-child {
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--mist);
+      }
+
+      .sidebar-nav {
+        padding: 20px 12px;
+        flex: 1;
+      }
+      .nav-section-label {
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+        padding: 0 12px;
+        margin: 16px 0 8px;
+        font-weight: 400;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13.5px;
+        font-weight: 400;
+        color: var(--mist);
+        transition:
+          background var(--trans),
+          color var(--trans);
+        text-decoration: none;
+        margin-bottom: 2px;
+      }
+      .nav-item svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .nav-item:hover {
+        background: var(--ink-3);
+        color: var(--white);
+      }
+      .nav-item.active {
+        background: var(--gold-dim);
+        color: var(--gold);
+        border: 1px solid rgba(201, 168, 76, 0.2);
+      }
+
+      .sidebar-footer {
+        padding: 20px 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .user-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .user-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gold), var(--sky));
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+        flex-shrink: 0;
+      }
+      .user-info {
+        flex: 1;
+        overflow: hidden;
+      }
+      .user-name {
+        font-size: 13px;
+        font-weight: 400;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .user-role {
+        font-size: 10px;
+        color: var(--mist);
+        letter-spacing: 0.05em;
+      }
+      .btn-logout {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--mist);
+        padding: 4px;
+        transition: color var(--trans);
+      }
+      .btn-logout:hover {
+        color: var(--ruby);
+      }
+      .btn-logout svg {
+        width: 15px;
+        height: 15px;
+        display: block;
+      }
+
+      /* MAIN CONTENT */
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .topbar {
+        padding: 20px 36px;
+        background: var(--ink-2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .topbar-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 22px;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+      }
+      .topbar-breadcrumb {
+        font-size: 12px;
+        color: var(--mist);
+        margin-top: 2px;
+        letter-spacing: 0.03em;
+      }
+      .topbar-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .btn-outline {
+        padding: 9px 18px;
+        background: none;
+        border: 1px solid rgba(201, 168, 76, 0.4);
+        border-radius: 8px;
+        color: var(--gold);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          background var(--trans),
+          box-shadow var(--trans);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn-outline svg {
+        width: 14px;
+        height: 14px;
+      }
+      .btn-outline:hover {
+        background: var(--gold-dim);
+        box-shadow: 0 0 0 1px var(--gold-glow);
+      }
+
+      .btn-solid {
+        padding: 9px 18px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-2));
+        border: none;
+        border-radius: 8px;
+        color: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          opacity var(--trans),
+          transform var(--trans);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 3px 14px rgba(201, 168, 76, 0.25);
+      }
+      .btn-solid svg {
+        width: 14px;
+        height: 14px;
+      }
+      .btn-solid:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .page-body {
+        padding: 32px 36px;
+        flex: 1;
+      }
+
+      /* ============================
+     PAGE 2 — DASHBOARD / HOME
+  ============================ */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-bottom: 32px;
+      }
+      .stat-card {
+        background: var(--ink-2);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 22px 24px;
+        position: relative;
+        overflow: hidden;
+        transition:
+          border-color var(--trans),
+          transform var(--trans);
+        animation: rise 0.5s ease both;
+      }
+      .stat-card:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+      .stat-card:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .stat-card:nth-child(3) {
+        animation-delay: 0.15s;
+      }
+      .stat-card:nth-child(4) {
+        animation-delay: 0.2s;
+      }
+      .stat-card:hover {
+        border-color: rgba(201, 168, 76, 0.2);
+        transform: translateY(-2px);
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        opacity: 0.07;
+      }
+      .stat-card.gold::before {
+        background: var(--gold);
+      }
+      .stat-card.jade::before {
+        background: var(--jade);
+      }
+      .stat-card.sky::before {
+        background: var(--sky);
+      }
+      .stat-card.ruby::before {
+        background: var(--ruby);
+      }
+
+      .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 14px;
+      }
+      .stat-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      .stat-card.gold .stat-icon {
+        background: var(--gold-dim);
+        color: var(--gold);
+      }
+      .stat-card.jade .stat-icon {
+        background: var(--jade-dim);
+        color: var(--jade);
+      }
+      .stat-card.sky .stat-icon {
+        background: var(--sky-dim);
+        color: var(--sky);
+      }
+      .stat-card.ruby .stat-icon {
+        background: var(--ruby-dim);
+        color: var(--ruby);
+      }
+
+      .stat-value {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 34px;
+        font-weight: 500;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--mist);
+        letter-spacing: 0.04em;
+      }
+      .stat-change {
+        font-size: 11px;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--jade);
+      }
+      .stat-change.down {
+        color: var(--ruby);
+      }
+
+      /* FILTER BAR */
+      .filter-bar {
+        background: var(--ink-2);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 18px 24px;
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .filter-label {
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--mist);
+      }
+      .filter-input,
+      .filter-select {
+        padding: 8px 12px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        border-radius: 7px;
+        color: var(--white);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        font-weight: 300;
+        outline: none;
+        transition: border-color var(--trans);
+        min-width: 140px;
+      }
+      .filter-input:focus,
+      .filter-select:focus {
+        border-color: var(--gold);
+      }
+      .filter-select option {
+        background: var(--ink-2);
+      }
+      .filter-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: auto;
+      }
+      .btn-filter {
+        padding: 8px 16px;
+        background: var(--gold-dim);
+        border: 1px solid rgba(201, 168, 76, 0.3);
+        border-radius: 7px;
+        color: var(--gold);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background var(--trans);
+      }
+      .btn-filter:hover {
+        background: rgba(201, 168, 76, 0.22);
+      }
+      .btn-reset {
+        padding: 8px 12px;
+        background: none;
+        border: 1px solid var(--ink-4);
+        border-radius: 7px;
+        color: var(--mist);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+        transition:
+          color var(--trans),
+          border-color var(--trans);
+      }
+      .btn-reset:hover {
+        color: var(--white);
+        border-color: var(--mist);
+      }
+
+      /* TABLE */
+      .table-wrap {
+        background: var(--ink-2);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        overflow: hidden;
+        animation: rise 0.4s 0.2s ease both;
+      }
+      .table-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .table-title {
+        font-size: 15px;
+        font-weight: 400;
+      }
+      .table-count {
+        font-size: 12px;
+        color: var(--mist);
+        margin-top: 2px;
+      }
+      .table-search {
+        position: relative;
+        width: 220px;
+      }
+      .table-search input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        border-radius: 7px;
+        color: var(--white);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        outline: none;
+        transition: border-color var(--trans);
+      }
+      .table-search input:focus {
+        border-color: var(--gold);
+      }
+      .table-search svg {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 15px;
+        height: 15px;
+        color: var(--mist);
+        pointer-events: none;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      thead th {
+        padding: 12px 20px;
+        text-align: left;
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--mist);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-weight: 400;
+      }
+      tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        transition: background var(--trans);
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      tbody td {
+        padding: 14px 20px;
+        font-size: 13.5px;
+        font-weight: 300;
+        color: var(--mist-2);
+        vertical-align: middle;
+      }
+      .td-name {
+        color: var(--white);
+        font-weight: 400;
+      }
+      .td-route {
+        color: var(--mist);
+        font-size: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+      .badge-eco {
+        background: var(--jade-dim);
+        color: var(--jade);
+        border: 1px solid rgba(58, 158, 124, 0.2);
+      }
+      .badge-prem {
+        background: var(--sky-dim);
+        color: var(--sky);
+        border: 1px solid rgba(59, 130, 196, 0.2);
+      }
+      .badge-vip {
+        background: var(--gold-dim);
+        color: var(--gold);
+        border: 1px solid rgba(201, 168, 76, 0.25);
+      }
+      .badge-pending {
+        background: rgba(255, 170, 50, 0.1);
+        color: #ffa832;
+        border: 1px solid rgba(255, 170, 50, 0.2);
+      }
+      .badge-confirmed {
+        background: var(--jade-dim);
+        color: var(--jade);
+        border: 1px solid rgba(58, 158, 124, 0.2);
+      }
+      .badge-cancelled {
+        background: var(--ruby-dim);
+        color: #f08086;
+        border: 1px solid rgba(192, 65, 74, 0.2);
+      }
+
+      .td-actions {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+      .btn-action {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          background var(--trans),
+          border-color var(--trans),
+          color var(--trans);
+        color: var(--mist);
+      }
+      .btn-action svg {
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+      }
+      .btn-action.edit:hover {
+        background: var(--sky-dim);
+        border-color: rgba(59, 130, 196, 0.3);
+        color: var(--sky);
+      }
+      .btn-action.delete:hover {
+        background: var(--ruby-dim);
+        border-color: rgba(192, 65, 74, 0.3);
+        color: #f08086;
+      }
+      .btn-action.view:hover {
+        background: var(--gold-dim);
+        border-color: rgba(201, 168, 76, 0.3);
+        color: var(--gold);
+      }
+
+      /* PAGINATION */
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .page-info {
+        font-size: 12px;
+        color: var(--mist);
+      }
+      .page-btns {
+        display: flex;
+        gap: 6px;
+      }
+      .page-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        color: var(--mist);
+        font-size: 12px;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          background var(--trans),
+          color var(--trans),
+          border-color var(--trans);
+        font-family: "DM Sans", sans-serif;
+      }
+      .page-btn:hover {
+        background: var(--gold-dim);
+        color: var(--gold);
+        border-color: rgba(201, 168, 76, 0.3);
+      }
+      .page-btn.active {
+        background: var(--gold-dim);
+        color: var(--gold);
+        border-color: rgba(201, 168, 76, 0.35);
+      }
+
+      /* ============================
+     PAGE 3 — BOOKING FORM
+  ============================ */
+      .form-card {
+        background: var(--ink-2);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        padding: 36px 40px;
+        max-width: 860px;
+        animation: rise 0.5s ease both;
+      }
+      .form-section-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 17px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: var(--gold);
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(201, 168, 76, 0.12);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .form-section-title svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .form-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .form-group-v {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .form-group-v label {
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--mist);
+        font-weight: 400;
+      }
+      .required-star {
+        color: var(--gold);
+        margin-left: 2px;
+      }
+
+      .field-input,
+      .field-select,
+      .field-textarea {
+        padding: 11px 14px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        border-radius: 8px;
+        color: var(--white);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13.5px;
+        font-weight: 300;
+        outline: none;
+        transition:
+          border-color var(--trans),
+          box-shadow var(--trans);
+        width: 100%;
+      }
+      .field-input:focus,
+      .field-select:focus,
+      .field-textarea:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px var(--gold-dim);
+      }
+      .field-input::placeholder {
+        color: var(--ink-4);
+      }
+      .field-select option {
+        background: var(--ink-2);
+        color: var(--white);
+      }
+      .field-textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+
+      /* flight type cards */
+      .flight-type-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .flight-type-card {
+        border: 1px solid var(--ink-4);
+        border-radius: 10px;
+        padding: 18px 20px;
+        cursor: pointer;
+        transition: all var(--trans);
+        position: relative;
+      }
+      .flight-type-card input[type="radio"] {
+        display: none;
+      }
+      .flight-type-card:hover {
+        border-color: rgba(201, 168, 76, 0.3);
+        background: rgba(255, 255, 255, 0.01);
+      }
+      .flight-type-card.selected-eco {
+        border-color: rgba(58, 158, 124, 0.5);
+        background: var(--jade-dim);
+      }
+      .flight-type-card.selected-prem {
+        border-color: rgba(59, 130, 196, 0.5);
+        background: var(--sky-dim);
+      }
+      .flight-type-card.selected-vip {
+        border-color: rgba(201, 168, 76, 0.5);
+        background: var(--gold-dim);
+      }
+
+      .ft-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 12px;
+      }
+      .ft-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .ft-eco .ft-icon {
+        background: var(--jade-dim);
+        color: var(--jade);
+      }
+      .ft-prem .ft-icon {
+        background: var(--sky-dim);
+        color: var(--sky);
+      }
+      .ft-vip .ft-icon {
+        background: var(--gold-dim);
+        color: var(--gold);
+      }
+
+      .ft-name {
+        font-weight: 400;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .ft-desc {
+        font-size: 11px;
+        color: var(--mist);
+        line-height: 1.5;
+      }
+      .ft-check {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transition: opacity var(--trans);
+      }
+      .ft-check svg {
+        width: 10px;
+        height: 10px;
+      }
+      .flight-type-card.selected-eco .ft-check {
+        opacity: 1;
+        background: var(--jade);
+        color: var(--ink);
+      }
+      .flight-type-card.selected-prem .ft-check {
+        opacity: 1;
+        background: var(--sky);
+        color: var(--ink);
+      }
+      .flight-type-card.selected-vip .ft-check {
+        opacity: 1;
+        background: var(--gold);
+        color: var(--ink);
+      }
+
+      .form-section {
+        margin-bottom: 32px;
+      }
+
+      .btn-submit {
+        padding: 14px 36px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-2));
+        border: none;
+        border-radius: 10px;
+        color: var(--ink);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          opacity var(--trans),
+          transform var(--trans),
+          box-shadow var(--trans);
+        box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-submit svg {
+        width: 16px;
+        height: 16px;
+      }
+      .btn-submit:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 28px rgba(201, 168, 76, 0.45);
+      }
+
+      .btn-cancel-form {
+        padding: 14px 24px;
+        background: none;
+        border: 1px solid var(--ink-4);
+        border-radius: 10px;
+        color: var(--mist);
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all var(--trans);
+      }
+      .btn-cancel-form:hover {
+        border-color: var(--mist);
+        color: var(--white);
+      }
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      /* SUCCESS TOAST */
+      .toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        background: var(--ink-2);
+        border: 1px solid rgba(58, 158, 124, 0.35);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 280px;
+      }
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .toast-icon {
+        color: var(--jade);
+      }
+      .toast-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      .toast-text {
+        font-size: 13.5px;
+      }
+      .toast-text strong {
+        display: block;
+        font-weight: 400;
+        color: var(--white);
+        margin-bottom: 2px;
+      }
+      .toast-text span {
+        font-size: 12px;
+        color: var(--mist);
+      }
+
+      /* MODAL */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: grid;
+        place-items: center;
+        z-index: 100;
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--trans);
+      }
+      .modal-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal {
+        background: var(--ink-2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 32px;
+        width: 420px;
+        max-width: 90vw;
+        transform: scale(0.95);
+        transition: transform var(--trans);
+        box-shadow: var(--shadow);
+      }
+      .modal-overlay.open .modal {
+        transform: scale(1);
+      }
+      .modal-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 20px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+      .modal-body {
+        font-size: 13.5px;
+        color: var(--mist);
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .btn-danger {
+        padding: 10px 20px;
+        background: var(--ruby);
+        border: none;
+        border-radius: 8px;
+        color: var(--white);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: opacity var(--trans);
+      }
+      .btn-danger:hover {
+        opacity: 0.85;
+      }
+      .btn-muted {
+        padding: 10px 20px;
+        background: var(--ink-3);
+        border: 1px solid var(--ink-4);
+        border-radius: 8px;
+        color: var(--mist);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all var(--trans);
+      }
+      .btn-muted:hover {
+        color: var(--white);
+        border-color: var(--mist);
+      }
+
+      /* scrollbar */
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--ink-4);
+        border-radius: 99px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===================== PAGE 1 — LOGIN ===================== -->
+    <div id="page-login" class="page active">
+      <div class="login-card">
+        <div class="login-logo">
+          <!-- plane icon -->
+          <svg
+            viewBox="0 0 36 36"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect width="36" height="36" rx="10" fill="rgba(201,168,76,.15)" />
+            <path
+              d="M8 20.5L13.5 19l2 5 2-2-3-4.5 7.5-5.5 1 3.5 2-.5-.5-4.5 2-1.5 1 3 1.5-.5L28 10l-4 1-.5 1.5 3 1-1.5 2-4.5-.5-5.5 7.5L11 19l-2 2 5 2-2 2L8 20.5z"
+              fill="#c9a84c"
+            />
+          </svg>
+          <div class="login-logo-text">
+            <span>AeroAdmin</span>
+            <span>Gestion des Réservations</span>
+          </div>
+        </div>
+
+        <h1 class="login-title">Connexion</h1>
+        <p class="login-subtitle">Accédez à votre espace d'administration</p>
+
+        <div id="login-error" class="login-error hidden">
+          Identifiants incorrects. Réessayez.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-email">Adresse e-mail</label>
+          <div class="input-icon-wrap">
+            <svg
+              class="icon"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <rect x="1" y="3.5" width="14" height="9" rx="2" />
+              <path d="M1 5.5l7 4.5 7-4.5" />
+            </svg>
+            <input
+              id="login-email"
+              class="form-input"
+              type="email"
+              placeholder="admin@aeroadmin.mg"
+              autocomplete="email"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-pass">Mot de passe</label>
+          <div class="input-icon-wrap">
+            <svg
+              class="icon"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <rect x="3" y="7" width="10" height="7" rx="1.5" />
+              <path d="M5 7V5a3 3 0 116 0v2" />
+            </svg>
+            <input
+              id="login-pass"
+              class="form-input"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="doLogin()">Se connecter</button>
+
+        <p class="login-footer">
+          Identifiants de démo: test@ / test
+        </p>
+      </div>
+    </div>
+
+    <!-- ===================== PAGES AUTHENTIFIÉES ===================== -->
+    <div id="page-home" class="page">
+      <div class="app-shell">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <div class="sidebar-logo">
+            <svg viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="8" fill="rgba(201,168,76,.15)" />
+              <path
+                d="M6 16l4-1 1.5 3.5 1.5-1.5-2-3.5 5.5-4 .5 2.5 1.5-.5-.5-3 1.5-1 .5 2 1-.5L21 7l-3 1-.5 1 2 1-1 1.5-3.5-.5-4 5.5-2.5-1-1.5 1.5 3.5 1-1.5 1.5L6 16z"
+                fill="#c9a84c"
+              />
+            </svg>
+            <div class="sidebar-logo-text">
+              <span>AeroAdmin</span>
+              <span>v2.4.1</span>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <div class="nav-section-label">Principal</div>
+            <a class="nav-item active" onclick="showPage('home')">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="1" y="1" width="6" height="6" rx="1" />
+                <rect x="9" y="1" width="6" height="6" rx="1" />
+                <rect x="1" y="9" width="6" height="6" rx="1" />
+                <rect x="9" y="9" width="6" height="6" rx="1" />
+              </svg>
+              Tableau de bord
+            </a>
+            <a class="nav-item" onclick="openNewReservation()">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-4z"
+                />
+                <path d="M9 2v4h4" />
+                <path d="M5 9h6M5 11.5h4" />
+              </svg>
+              Nouvelle Réservation
+            </a>
+
+            <div class="nav-section-label">Gestion</div>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <circle cx="8" cy="5" r="3" />
+                <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+              </svg>
+              Passagers
+            </a>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M3 3h10v2L8 9 3 5V3z" />
+                <path d="M3 5v8h10V5" />
+              </svg>
+              Rapports
+            </a>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <circle cx="8" cy="8" r="6" />
+                <path d="M8 5v3l2 2" />
+              </svg>
+              Historique
+            </a>
+
+            <div class="nav-section-label">Système</div>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <circle cx="8" cy="8" r="2.5" />
+                <path
+                  d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l1.41-1.41M3.05 12.95l1.41-1.41"
+                />
+              </svg>
+              Paramètres
+            </a>
+          </nav>
+
+          <div class="sidebar-footer">
+            <div class="user-card">
+              <div class="user-avatar">AD</div>
+              <div class="user-info">
+                <div class="user-name">Admin</div>
+                <div class="user-role">Super Administrateur</div>
+              </div>
+              <button
+                class="btn-logout"
+                onclick="doLogout()"
+                title="Déconnexion"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M10 11l3-3-3-3M13 8H6" />
+                  <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main-content">
+          <header class="topbar">
+            <div>
+              <div class="topbar-title">Tableau de bord</div>
+              <div class="topbar-breadcrumb">AeroAdmin / Accueil</div>
+            </div>
+            <div class="topbar-actions">
+              <button class="btn-outline" onclick="openNewReservation()">
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M8 3v10M3 8h10" />
+                </svg>
+                Nouvelle Réservation
+              </button>
+            </div>
+          </header>
+
+          <div class="page-body">
+            <!-- STATS -->
+            <div class="stats-grid">
+              <div class="stat-card gold">
+                <div class="stat-icon">
+                  <svg
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M2 11l3-2 2 1.5 4-4 4 3" />
+                    <rect x="1" y="1" width="16" height="16" rx="2" />
+                  </svg>
+                </div>
+                <div class="stat-value">1 248</div>
+                <div class="stat-label">Réservations totales</div>
+                <div class="stat-change">↑ 12.4% ce mois</div>
+              </div>
+              <div class="stat-card jade">
+                <div class="stat-icon">
+                  <svg
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <circle cx="9" cy="9" r="7" />
+                    <path d="M9 5v4l2.5 2.5" />
+                  </svg>
+                </div>
+                <div class="stat-value">342</div>
+                <div class="stat-label">En attente</div>
+                <div class="stat-change">↑ 3.1% ce mois</div>
+              </div>
+              <div class="stat-card sky">
+                <div class="stat-icon">
+                  <svg
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M2 9l4 4 8-8" />
+                  </svg>
+                </div>
+                <div class="stat-value">876</div>
+                <div class="stat-label">Confirmées</div>
+                <div class="stat-change">↑ 8.7% ce mois</div>
+              </div>
+              <div class="stat-card ruby">
+                <div class="stat-icon">
+                  <svg
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M9 3v6M9 12v1.5" />
+                    <circle cx="9" cy="9" r="7" />
+                  </svg>
+                </div>
+                <div class="stat-value">30</div>
+                <div class="stat-label">Annulées</div>
+                <div class="stat-change down">↑ 2.3% ce mois</div>
+              </div>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-label">Statut</span>
+                <select
+                  class="filter-select"
+                  id="filter-status"
+                  onchange="applyFilters()"
+                >
+                  <option value="">Tous les statuts</option>
+                  <option>Confirmée</option>
+                  <option>En attente</option>
+                  <option>Annulée</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Type de vol</span>
+                <select
+                  class="filter-select"
+                  id="filter-class"
+                  onchange="applyFilters()"
+                >
+                  <option value="">Toutes classes</option>
+                  <option>Économique</option>
+                  <option>Premium</option>
+                  <option>VIP</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Du</span>
+                <input
+                  class="filter-input"
+                  type="date"
+                  id="filter-from"
+                  onchange="applyFilters()"
+                />
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Au</span>
+                <input
+                  class="filter-input"
+                  type="date"
+                  id="filter-to"
+                  onchange="applyFilters()"
+                />
+              </div>
+              <div class="filter-actions">
+                <button class="btn-filter" onclick="applyFilters()">
+                  Filtrer
+                </button>
+                <button class="btn-reset" onclick="resetFilters()">
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-wrap">
+              <div class="table-header">
+                <div>
+                  <div class="table-title">Réservations récentes</div>
+                  <div class="table-count" id="table-count">
+                    Affichage de 8 entrées
+                  </div>
+                </div>
+                <div class="table-search">
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <circle cx="7" cy="7" r="5" />
+                    <path d="M11 11l3 3" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Rechercher..."
+                    id="search-input"
+                    oninput="applyFilters()"
+                  />
+                </div>
+              </div>
+
+              <div style="overflow-x: auto">
+                <table id="res-table">
+                  <thead>
+                    <tr>
+                      <th>N° Réservation</th>
+                      <th>Passager</th>
+                      <th>Itinéraire</th>
+                      <th>Départ</th>
+                      <th>Classe</th>
+                      <th>Motif</th>
+                      <th>Statut</th>
+                      <th style="text-align: right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-body"></tbody>
+                </table>
+              </div>
+
+              <div class="pagination">
+                <div class="page-info">Page 1 sur 3</div>
+                <div class="page-btns">
+                  <button class="page-btn">‹</button>
+                  <button class="page-btn active">1</button>
+                  <button class="page-btn">2</button>
+                  <button class="page-btn">3</button>
+                  <button class="page-btn">›</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- end page-body -->
+        </main>
+      </div>
+    </div>
+    <!-- end page-home -->
+
+    <!-- ===================== PAGE 3 — BOOKING FORM ===================== -->
+    <div id="page-form" class="page">
+      <div class="app-shell">
+        <!-- SIDEBAR (same) -->
+        <aside class="sidebar">
+          <div class="sidebar-logo">
+            <svg viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="8" fill="rgba(201,168,76,.15)" />
+              <path
+                d="M6 16l4-1 1.5 3.5 1.5-1.5-2-3.5 5.5-4 .5 2.5 1.5-.5-.5-3 1.5-1 .5 2 1-.5L21 7l-3 1-.5 1 2 1-1 1.5-3.5-.5-4 5.5-2.5-1-1.5 1.5 3.5 1-1.5 1.5L6 16z"
+                fill="#c9a84c"
+              />
+            </svg>
+            <div class="sidebar-logo-text">
+              <span>AeroAdmin</span>
+              <span>v2.4.1</span>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <div class="nav-section-label">Principal</div>
+            <a class="nav-item" onclick="showPage('home')">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="1" y="1" width="6" height="6" rx="1" />
+                <rect x="9" y="1" width="6" height="6" rx="1" />
+                <rect x="1" y="9" width="6" height="6" rx="1" />
+                <rect x="9" y="9" width="6" height="6" rx="1" />
+              </svg>
+              Tableau de bord
+            </a>
+            <a class="nav-item active" onclick="openNewReservation()">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6l-4-4z"
+                />
+                <path d="M9 2v4h4" />
+                <path d="M5 9h6M5 11.5h4" />
+              </svg>
+              Nouvelle Réservation
+            </a>
+            <div class="nav-section-label">Gestion</div>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <circle cx="8" cy="5" r="3" />
+                <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+              </svg>
+              Passagers
+            </a>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M3 3h10v2L8 9 3 5V3z" />
+                <path d="M3 5v8h10V5" />
+              </svg>
+              Rapports
+            </a>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <circle cx="8" cy="8" r="6" />
+                <path d="M8 5v3l2 2" />
+              </svg>
+              Historique
+            </a>
+            <div class="nav-section-label">Système</div>
+            <a class="nav-item">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <circle cx="8" cy="8" r="2.5" />
+                <path
+                  d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l1.41-1.41M3.05 12.95l1.41-1.41"
+                />
+              </svg>
+              Paramètres
+            </a>
+          </nav>
+
+          <div class="sidebar-footer">
+            <div class="user-card">
+              <div class="user-avatar">AD</div>
+              <div class="user-info">
+                <div class="user-name">Admin</div>
+                <div class="user-role">Super Administrateur</div>
+              </div>
+              <button
+                class="btn-logout"
+                onclick="doLogout()"
+                title="Déconnexion"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M10 11l3-3-3-3M13 8H6" />
+                  <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN FORM -->
+        <main class="main-content">
+          <header class="topbar">
+            <div>
+              <div class="topbar-title">Nouvelle Réservation</div>
+              <div class="topbar-breadcrumb">
+                AeroAdmin / Réservations / Créer
+              </div>
+            </div>
+            <div class="topbar-actions">
+              <button class="btn-outline" onclick="showPage('home')">
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M10 3L5 8l5 5" />
+                </svg>
+                Retour
+              </button>
+            </div>
+          </header>
+
+          <div class="page-body">
+            <div class="form-card">
+              <!-- Section 1: Identité -->
+              <div class="form-section">
+                <div class="form-section-title">
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <circle cx="8" cy="5" r="3" />
+                    <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                  </svg>
+                  Informations du Passager
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group-v">
+                    <label>Nom <span class="required-star">*</span></label>
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="RAKOTO"
+                      id="f-nom"
+                    />
+                  </div>
+                  <div class="form-group-v">
+                    <label>Prénom <span class="required-star">*</span></label>
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="Jean-Baptiste"
+                      id="f-prenom"
+                    />
+                  </div>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group-v">
+                    <label
+                      >Numéro de pièce d'identité
+                      <span class="required-star">*</span></label
+                    >
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="CIN / Passeport"
+                      id="f-cni"
+                    />
+                  </div>
+                  <div class="form-group-v">
+                    <label>Type de document</label>
+                    <select class="field-select" id="f-doc-type">
+                      <option>Carte nationale d'identité</option>
+                      <option>Passeport</option>
+                      <option>Titre de séjour</option>
+                      <option>Autre</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group-v">
+                    <label>Téléphone</label>
+                    <input
+                      class="field-input"
+                      type="tel"
+                      placeholder="+261 34 00 000 00"
+                      id="f-tel"
+                    />
+                  </div>
+                  <div class="form-group-v">
+                    <label>Adresse e-mail</label>
+                    <input
+                      class="field-input"
+                      type="email"
+                      placeholder="passager@email.com"
+                      id="f-email"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 2: Vol -->
+              <div class="form-section">
+                <div class="form-section-title">
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path
+                      d="M2 10l2-1.5 1 2.5 1.5-1-1.5-2.5 4-3.5.5 2 1-.5-.5-2.5 1-1 .5 1.5 1-.5L13.5 4l-2 .5-.5 1 1.5 1-1 1.5-2.5-.5-3.5 4-1.5-.5-1 1.5 2.5 1-1 1-2.5-2z"
+                    />
+                  </svg>
+                  Informations du Vol
+                </div>
+                <div class="form-grid-3">
+                  <div class="form-group-v">
+                    <label
+                      >Ville de départ
+                      <span class="required-star">*</span></label
+                    >
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="Antananarivo (TNR)"
+                      id="f-depart-ville"
+                    />
+                  </div>
+                  <div class="form-group-v">
+                    <label
+                      >Ville d'arrivée
+                      <span class="required-star">*</span></label
+                    >
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="Paris (CDG)"
+                      id="f-arrivee-ville"
+                    />
+                  </div>
+                  <div class="form-group-v">
+                    <label>Numéro de vol</label>
+                    <input
+                      class="field-input"
+                      type="text"
+                      placeholder="MD 501"
+                      id="f-num-vol"
+                    />
+                  </div>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group-v">
+                    <label
+                      >Date & heure de départ
+                      <span class="required-star">*</span></label
+                    >
+                    <input
+                      class="field-input"
+                      type="datetime-local"
+                      id="f-date-dep"
+                    />
+                  </div>
+                  <div class="form-group-v">
+                    <label
+                      >Date & heure d'arrivée
+                      <span class="required-star">*</span></label
+                    >
+                    <input
+                      class="field-input"
+                      type="datetime-local"
+                      id="f-date-arr"
+                    />
+                  </div>
+                </div>
+                <div class="form-grid-2">
+                  <div class="form-group-v">
+                    <label
+                      >Motif du voyage
+                      <span class="required-star">*</span></label
+                    >
+                    <select class="field-select" id="f-motif">
+                      <option value="">— Sélectionner —</option>
+                      <option>Tourisme / Loisirs</option>
+                      <option>Affaires / Professionnel</option>
+                      <option>Études</option>
+                      <option>Médical</option>
+                      <option>Famille / Personnel</option>
+                      <option>Transit</option>
+                      <option>Autre</option>
+                    </select>
+                  </div>
+                  <div class="form-group-v">
+                    <label>Nombre de bagages</label>
+                    <select class="field-select" id="f-bagages">
+                      <option>0 bagage</option>
+                      <option>1 bagage (23 kg)</option>
+                      <option>2 bagages (23 kg chacun)</option>
+                      <option>3 bagages et plus</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Classe -->
+              <div class="form-section">
+                <div class="form-section-title">
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M3 8h10M3 5h4M3 11h7" />
+                  </svg>
+                  Type de Vol
+                </div>
+                <div class="flight-type-grid">
+                  <label
+                    class="flight-type-card ft-eco"
+                    id="card-eco"
+                    onclick="selectClass('eco')"
+                  >
+                    <input type="radio" name="flight-class" value="eco" />
+                    <div class="ft-check">
+                      <svg
+                        viewBox="0 0 10 10"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M2 5l2 2 4-4" />
+                      </svg>
+                    </div>
+                    <div class="ft-icon">
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <rect x="2" y="6" width="16" height="10" rx="2" />
+                        <path d="M7 6V4a3 3 0 016 0v2" />
+                      </svg>
+                    </div>
+                    <div class="ft-name">Économique</div>
+                    <div class="ft-desc">
+                      Tarif avantageux pour voyager sereinement à moindre coût.
+                    </div>
+                  </label>
+
+                  <label
+                    class="flight-type-card ft-prem"
+                    id="card-prem"
+                    onclick="selectClass('prem')"
+                  >
+                    <input type="radio" name="flight-class" value="prem" />
+                    <div class="ft-check">
+                      <svg
+                        viewBox="0 0 10 10"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M2 5l2 2 4-4" />
+                      </svg>
+                    </div>
+                    <div class="ft-icon">
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <path d="M3 10l4-4 4 4 4-7M3 16h14" />
+                      </svg>
+                    </div>
+                    <div class="ft-name">Premium</div>
+                    <div class="ft-desc">
+                      Confort accru, repas inclus et priorité d'embarquement.
+                    </div>
+                  </label>
+
+                  <label
+                    class="flight-type-card ft-vip"
+                    id="card-vip"
+                    onclick="selectClass('vip')"
+                  >
+                    <input type="radio" name="flight-class" value="vip" />
+                    <div class="ft-check">
+                      <svg
+                        viewBox="0 0 10 10"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M2 5l2 2 4-4" />
+                      </svg>
+                    </div>
+                    <div class="ft-icon">
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <path
+                          d="M10 3l2 4 4.5.5-3.25 3.25.75 4.5L10 13l-4 2.25.75-4.5L3.5 7.5 8 7l2-4z"
+                        />
+                      </svg>
+                    </div>
+                    <div class="ft-name">VIP</div>
+                    <div class="ft-desc">
+                      Expérience luxe, salon privé et services personnalisés.
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Section 4: Infos complémentaires -->
+              <div class="form-section">
+                <div class="form-section-title">
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M8 2v4l2 1M8 14a6 6 0 100-12 6 6 0 000 12z" />
+                  </svg>
+                  Informations Complémentaires
+                </div>
+                <div class="form-grid-2" style="margin-bottom: 16px">
+                  <div class="form-group-v">
+                    <label>Statut de la réservation</label>
+                    <select class="field-select" id="f-statut">
+                      <option value="pending">En attente</option>
+                      <option value="confirmed">Confirmée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
+                  </div>
+                  <div class="form-group-v">
+                    <label>Besoins spéciaux</label>
+                    <select class="field-select" id="f-special">
+                      <option>Aucun</option>
+                      <option>Fauteuil roulant</option>
+                      <option>Régime alimentaire particulier</option>
+                      <option>Assistance médicale</option>
+                      <option>Voyageur non accompagné</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group-v">
+                  <label>Notes / Remarques</label>
+                  <textarea
+                    class="field-textarea"
+                    placeholder="Informations supplémentaires à communiquer…"
+                    id="f-notes"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- ACTIONS -->
+              <div class="form-actions">
+                <button
+                  id="form-submit-btn"
+                  class="btn-submit"
+                  onclick="submitForm()"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M2 9l4 4 8-8" />
+                  </svg>
+                  <span id="form-submit-label">Soumettre la Réservation</span>
+                </button>
+                <button class="btn-cancel-form" onclick="cancelForm()">
+                  Annuler
+                </button>
+              </div>
+            </div>
+            <!-- end form-card -->
+          </div>
+        </main>
+      </div>
+    </div>
+    <!-- end page-form -->
+
+    <!-- MODAL CONFIRMATION SUPPRESSION -->
+    <div class="modal-overlay" id="delete-modal">
+      <div class="modal">
+        <div class="modal-title">Supprimer la réservation</div>
+        <div class="modal-body">
+          Êtes-vous certain de vouloir supprimer la réservation
+          <strong id="modal-res-id"></strong> ? Cette action est irréversible.
+        </div>
+        <div class="modal-actions">
+          <button class="btn-muted" onclick="closeModal()">Annuler</button>
+          <button class="btn-danger" onclick="confirmDelete()">
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+      <div class="toast-icon">
+        <svg
+          viewBox="0 0 22 22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <circle cx="11" cy="11" r="9" />
+          <path d="M7 11l3 3 5-5" />
+        </svg>
+      </div>
+      <div class="toast-text">
+        <strong id="toast-title">Succès</strong>
+        <span id="toast-msg">Opération effectuée avec succès.</span>
+      </div>
+    </div>
+
+    <script>
+          /* ===== DATA ===== */
+          let allReservations = [];
+          let tableData = [];
+          let deleteTarget = null;
+          let selectedClass = null;
+          let editingReservationId = null;
+          const API_BASE_URL = "http://localhost:8081";
+          const ITEMS_PER_PAGE = 10;
+          let currentPage = 1;
+
+          async function loadReservations() {
+            try {
+              const response = await fetch(`${API_BASE_URL}/reservations`);
+              if (!response.ok) {
+                throw new Error("Unable to load reservations");
+              }
+              const payload = await response.json();
+              allReservations = payload.data || [];
+              tableData = [...allReservations];
+              renderTable(tableData);
+            } catch (error) {
+              showToast("Erreur", "Impossible de charger les réservations.");
+            }
+          }
+
+          function updateStats() {
+            const total = allReservations.length;
+            const pending = allReservations.filter(r => r.statut === 'pending').length;
+            const confirmed = allReservations.filter(r => r.statut === 'confirmed').length;
+            const cancelled = allReservations.filter(r => r.statut === 'cancelled').length;
+
+            // Update card values
+            document.querySelector('.stat-card.gold .stat-value').textContent = total.toLocaleString();
+            document.querySelector('.stat-card.jade .stat-value').textContent = pending.toLocaleString();
+            document.querySelector('.stat-card.sky .stat-value').textContent = confirmed.toLocaleString();
+            document.querySelector('.stat-card.ruby .stat-value').textContent = cancelled.toLocaleString();
+
+            // Calculate and update percentages
+            const pendingPercent = total > 0 ? ((pending / total) * 100).toFixed(1) : 0;
+            const confirmedPercent = total > 0 ? ((confirmed / total) * 100).toFixed(1) : 0;
+            const cancelledPercent = total > 0 ? ((cancelled / total) * 100).toFixed(1) : 0;
+
+            document.querySelector('.stat-card.gold .stat-change').textContent = `${pendingPercent}% en attente`;
+            document.querySelector('.stat-card.jade .stat-change').textContent = `${pendingPercent}% du total`;
+            document.querySelector('.stat-card.sky .stat-change').textContent = `${confirmedPercent}% du total`;
+            document.querySelector('.stat-card.ruby .stat-change').textContent = `${cancelledPercent}% du total`;
+          }
+
+          /* ===== PAGES ===== */
+          function showPage(name) {
+            document
+              .querySelectorAll(".page")
+              .forEach((p) => p.classList.remove("active"));
+            document.getElementById("page-" + name).classList.add("active");
+            if (name === "home") {
+              renderTable(tableData);
+              loadReservations();
+              updateStats();
+            }
+          }
+
+          /* ===== LOGIN ===== */
+          async function doLogin() {
+            const email = document.getElementById("login-email").value.trim();
+            const pass = document.getElementById("login-pass").value.trim();
+            const err = document.getElementById("login-error");
+            const btn = document.querySelector(".btn-primary");
+
+            if (!email || !pass) {
+              err.textContent =
+                "Veuillez saisir votre e-mail et votre mot de passe.";
+              err.classList.remove("hidden");
+              return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Connexion...";
+
+            try {
+              const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  login: email,
+                  password: pass,
+                }),
+              });
+
+              const data = await response.json().catch(() => null);
+
+              if (!response.ok) {
+                err.textContent =
+                  data?.message || "Identifiants incorrects. Réessayez.";
+                err.classList.remove("hidden");
+                return;
+              }
+
+              err.classList.add("hidden");
+              await loadReservations();
+              showPage("home");
+            } catch (error) {
+              err.textContent =
+                "Connexion impossible au serveur. Vérifiez que l'API tourne sur localhost:8081.";
+              err.classList.remove("hidden");
+            } finally {
+              btn.disabled = false;
+              btn.textContent = "Se connecter";
+            }
+          }
+          document.addEventListener("keydown", (e) => {
+            if (
+              e.key === "Enter" &&
+              document.getElementById("page-login").classList.contains("active")
+            )
+              doLogin();
+          });
+
+          /* ===== LOGOUT ===== */
+          function doLogout() {
+            showPage("login");
+          }
+
+          /* ===== TABLE ===== */
+          const classBadge = {
+            Économique: "badge-eco",
+            Premium: "badge-prem",
+            VIP: "badge-vip",
+          };
+          const statusBadge = {
+            confirmed: "badge-confirmed",
+            pending: "badge-pending",
+            cancelled: "badge-cancelled",
+          };
+          const statusLabel = {
+            confirmed: "Confirmée",
+            pending: "En attente",
+            cancelled: "Annulée",
+          };
+
+          function renderTable(data) {
+            const tbody = document.getElementById("table-body");
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const pageData = data.slice(startIndex, endIndex);
+
+            document.getElementById("table-count").textContent =
+              `Affichage de ${pageData.length} entrée${pageData.length !== 1 ? "s" : ""} (page ${currentPage} sur ${Math.ceil(data.length / ITEMS_PER_PAGE)})`;
+            if (!pageData.length) {
+              tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--mist)">Aucune réservation trouvée.</td></tr>`;
+              return;
+            }
+            tbody.innerHTML = pageData
+              .map(
+                (r) => `
+        <tr>
+          <td style="font-size:12px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:13px">${r.id}</td>
+          <td class="td-name">${r.nom}</td>
+          <td class="td-route">${r.depart_ville || r.route.split(" → ")[0] || ""} → ${r.arrivee_ville || r.route.split(" → ")[1] || ""}</td>
+          <td>${r.depart}</td>
+          <td><span class="badge ${classBadge[r.classe] || "badge-eco"}">${r.classe}</span></td>
+          <td style="color:var(--mist)">${r.motif}</td>
+          <td><span class="badge ${statusBadge[r.statut]}">${statusLabel[r.statut]}</span></td>
+          <td>
+            <div class="td-actions">
+              <button class="btn-action view"   title="Voir"      onclick="showToast('Information','Consultation de '+this.closest('tr').cells[0].textContent)">
+                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="2.5"/><path d="M1 7s2-5 6-5 6 5 6 5-2 5-6 5-6-5-6-5z"/></svg>
+              </button>
+              <button class="btn-action edit"   title="Modifier"  onclick="editReservation('${r.id}')">
+                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 2l2.5 2.5-7 7H2.5V9l7-7z"/></svg>
+              </button>
+              <button class="btn-action delete" title="Supprimer" onclick="openModal('${r.id}')">
+                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h10M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3 4l.5 8h7L11 4"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+  `,
+              )
+              .join("");
+            renderPagination(data.length);
+          }
+
+          function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            const pagination = document.querySelector('.pagination');
+            const pageInfo = pagination.querySelector('.page-info');
+            const pageBtns = pagination.querySelector('.page-btns');
+
+            // Update page info
+            pageInfo.textContent = `Page ${currentPage} sur ${totalPages || 1}`;
+
+            // Clear existing buttons
+            pageBtns.innerHTML = '';
+
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '‹';
+            prevBtn.onclick = () => prevPage();
+            prevBtn.disabled = currentPage === 1;
+            pageBtns.appendChild(prevBtn);
+
+            // Page number buttons
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+              const pageBtn = document.createElement('button');
+              pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+              pageBtn.textContent = i;
+              pageBtn.onclick = () => goToPage(i);
+              pageBtns.appendChild(pageBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = '›';
+            nextBtn.onclick = () => nextPage();
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+            pageBtns.appendChild(nextBtn);
+          }
+
+          function goToPage(page) {
+            const totalPages = Math.ceil(tableData.length / ITEMS_PER_PAGE);
+            if (page >= 1 && page <= totalPages) {
+              currentPage = page;
+              renderTable(tableData);
+            }
+          }
+
+          function nextPage() {
+            const totalPages = Math.ceil(tableData.length / ITEMS_PER_PAGE);
+            if (currentPage < totalPages) {
+              currentPage++;
+              renderTable(tableData);
+            }
+          }
+
+          function prevPage() {
+            if (currentPage > 1) {
+              currentPage--;
+              renderTable(tableData);
+            }
+          }
+
+          /* ===== FILTERS ===== */
+          function applyFilters() {
+            const status = document.getElementById("filter-status").value;
+            const cls = document.getElementById("filter-class").value;
+            const search = (
+              document.getElementById("search-input").value || ""
+            ).toLowerCase();
+            const filtered = allReservations.filter((r) => {
+              if (status && statusLabel[r.statut] !== status) return false;
+              if (cls && r.classe !== cls) return false;
+              if (
+                search &&
+                !r.nom.toLowerCase().includes(search) &&
+                !r.id.toLowerCase().includes(search) &&
+                !r.route.toLowerCase().includes(search)
+              )
+                return false;
+              return true;
+            });
+            tableData = filtered;
+            renderTable(tableData);
+          }
+          function resetFilters() {
+            document.getElementById("filter-status").value = "";
+            document.getElementById("filter-class").value = "";
+            document.getElementById("filter-from").value = "";
+            document.getElementById("filter-to").value = "";
+            document.getElementById("search-input").value = "";
+            tableData = [...allReservations];
+            renderTable(tableData);
+          }
+
+          /* ===== MODAL ===== */
+          function openModal(id) {
+            deleteTarget = id;
+            document.getElementById("modal-res-id").textContent = id;
+            document.getElementById("delete-modal").classList.add("open");
+          }
+          function closeModal() {
+            document.getElementById("delete-modal").classList.remove("open");
+            deleteTarget = null;
+          }
+          async function confirmDelete() {
+            if (!deleteTarget) {
+              closeModal();
+              return;
+            }
+
+            try {
+              const response = await fetch(
+                `${API_BASE_URL}/reservations/${deleteTarget}`,
+                {
+                  method: "DELETE",
+                },
+              );
+              if (!response.ok) {
+                throw new Error("Delete failed");
+              }
+              await loadReservations();
+              updateStats();
+              showToast(
+                "Supprimée",
+                `La réservation ${deleteTarget} a été supprimée.`,
+              );
+            } catch (error) {
+              showToast("Erreur", "Impossible de supprimer la réservation.");
+            }
+            closeModal();
+          }
+          document
+            .getElementById("delete-modal")
+            .addEventListener("click", function (e) {
+              if (e.target === this) closeModal();
+            });
+
+          /* ===== TOAST ===== */
+          let toastTimer;
+          function showToast(title, msg) {
+            clearTimeout(toastTimer);
+            document.getElementById("toast-title").textContent = title;
+            document.getElementById("toast-msg").textContent = msg;
+            const t = document.getElementById("toast");
+            t.classList.add("show");
+            toastTimer = setTimeout(() => t.classList.remove("show"), 3500);
+          }
+
+          /* ===== FORM ===== */
+          function selectClass(cls) {
+            selectedClass = cls;
+            ["eco", "prem", "vip"].forEach((c) => {
+              const card = document.getElementById("card-" + c);
+              card.classList.remove(
+                "selected-eco",
+                "selected-prem",
+                "selected-vip",
+              );
+            });
+            document.getElementById("card-" + cls).classList.add("selected-" + cls);
+          }
+
+          function openNewReservation() {
+            resetForm();
+            showPage("form");
+          }
+
+          function editReservation(id) {
+            const reservation = allReservations.find((r) => r.id === id);
+            if (!reservation) return;
+            editingReservationId = id;
+            const [nom, prenom] = reservation.nom.split(" ");
+            document.getElementById("f-nom").value = nom || "";
+            document.getElementById("f-prenom").value = prenom || "";
+            document.getElementById("f-depart-ville").value =
+              reservation.depart_ville || reservation.route.split(" → ")[0] || "";
+            document.getElementById("f-arrivee-ville").value =
+              reservation.arrivee_ville || reservation.route.split(" → ")[1] || "";
+            document.getElementById("f-date-dep").value =
+              reservation.date_depart || "";
+            document.getElementById("f-date-arr").value =
+              reservation.date_arrivee || "";
+            document.getElementById("f-motif").value = reservation.motif || "";
+            document.getElementById("f-statut").value =
+              reservation.statut || "pending";
+            selectClass(
+              reservation.classe === "Premium"
+                ? "prem"
+                : reservation.classe === "VIP"
+                  ? "vip"
+                  : "eco",
+            );
+            document.getElementById("form-submit-label").textContent =
+              "Mettre à jour la réservation";
+            showPage("form");
+          }
+
+          function cancelForm() {
+            resetForm();
+            showPage("home");
+          }
+
+          async function submitForm() {
+            const nom = document.getElementById("f-nom").value.trim();
+            const prenom = document.getElementById("f-prenom").value.trim();
+            const dep = document.getElementById("f-depart-ville").value.trim();
+            const arr = document.getElementById("f-arrivee-ville").value.trim();
+            const numVol = document.getElementById("f-num-vol").value.trim();
+            const depDate = document.getElementById("f-date-dep").value;
+            const arrDate = document.getElementById("f-date-arr").value;
+            const motif = document.getElementById("f-motif").value;
+            const statut = document.getElementById("f-statut").value || "pending";
+            const docType = document.getElementById("f-doc-type").value;
+            const bagages = document.getElementById("f-bagages").value;
+            const special = document.getElementById("f-special").value;
+            const notes = document.getElementById("f-notes").value.trim();
+
+            if (!nom || !prenom || !dep || !arr || !depDate || !motif) {
+              showToast(
+                "Champs manquants",
+                "Veuillez remplir tous les champs obligatoires.",
+              );
+              return;
+            }
+
+            const classeLabel = { eco: "Économique", prem: "Premium", vip: "VIP" };
+            const dateStr = new Date(depDate).toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            });
+
+            const payload = {
+              nom: nom,
+              prenom: prenom,
+              document_id: document.getElementById("f-cni").value.trim(),
+              document_type: docType,
+              telephone: document.getElementById("f-tel").value.trim(),
+              email: document.getElementById("f-email").value.trim(),
+              depart_ville: dep,
+              arrivee_ville: arr,
+              vol_numero: numVol,
+              date_depart: depDate,
+              date_arrivee: arrDate,
+              motif: motif,
+              bagages: bagages,
+              classe: classeLabel[selectedClass] || "Économique",
+              statut: statut,
+              special: special,
+              notes: notes,
+              route: `${dep} → ${arr}`,
+              depart: dateStr,
+            };
+
+            try {
+              const endpoint = editingReservationId
+                ? `${API_BASE_URL}/reservations/${editingReservationId}`
+                : `${API_BASE_URL}/reservations`;
+              const method = editingReservationId ? "PUT" : "POST";
+              const response = await fetch(endpoint, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+
+              if (!response.ok) {
+                const errorBody = await response.json().catch(() => null);
+                throw new Error(errorBody?.message || "Erreur serveur");
+              }
+
+              const result = await response.json();
+              await loadReservations();
+              updateStats();
+              showToast(
+                editingReservationId
+                  ? "Réservation mise à jour"
+                  : "Réservation créée",
+                editingReservationId
+                  ? `${editingReservationId} a été modifiée avec succès.`
+                  : `${result.data.id} a été enregistrée avec succès.`,
+              );
+              resetForm();
+              setTimeout(() => showPage("home"), 900);
+            } catch (error) {
+              showToast(
+                "Erreur",
+                error.message || "Impossible d'enregistrer la réservation.",
+              );
+            }
+          }
+
+          function resetForm() {
+            [
+              "f-nom",
+              "f-prenom",
+              "f-cni",
+              "f-tel",
+              "f-email",
+              "f-depart-ville",
+              "f-arrivee-ville",
+              "f-num-vol",
+              "f-date-dep",
+              "f-date-arr",
+              "f-notes",
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            document.getElementById("f-doc-type").value =
+              "Carte nationale d'identité";
+            document.getElementById("f-bagages").value = "0 bagage";
+            document.getElementById("f-special").value = "Aucun";
+            document.getElementById("f-statut").value = "pending";
+            selectedClass = null;
+            editingReservationId = null;
+            document.getElementById("form-submit-label").textContent =
+              "Soumettre la Réservation";
+            ["eco", "prem", "vip"].forEach((c) => {
+              document
+                .getElementById("card-" + c)
+                .classList.remove("selected-eco", "selected-prem", "selected-vip");
+            });
+          }
+
+          /* init */
+          renderTable(tableData);
+    </script>
+  </body>
+</html>
