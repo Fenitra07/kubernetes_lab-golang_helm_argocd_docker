@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	configs "server/configs"
+	"strconv"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,6 +15,7 @@ var AppConfiguration configs.Configuration
 
 func Load() {
 	configs := loadAppConfig()
+	overrideConfigWithEnv(&configs)
 	if configs.API.Host == "" {
 		log.Fatalf("Error loading configurations: EMPTY API HOST FROM CONFIGURATION FILE")
 	}
@@ -22,6 +24,30 @@ func Load() {
 	}
 	ValidateConfig(configs)
 	AppConfiguration = configs
+}
+
+func overrideConfigWithEnv(configs *configs.Configuration) {
+	if host := os.Getenv("API_HOST"); host != "" {
+		configs.API.Host = host
+	}
+
+	if port := os.Getenv("API_PORT"); port != "" {
+		if value, err := strconv.Atoi(port); err == nil {
+			configs.API.Port = value
+		}
+	}
+
+	if dsn := os.Getenv("DB_DSN"); dsn != "" {
+		configs.DB_DSN = dsn
+	}
+
+	if secret := os.Getenv("JWT_SECRET_KEY"); secret != "" {
+		configs.JWT.SecretKey = secret
+	}
+
+	if expire := os.Getenv("JWT_TOKEN_EXPIRE"); expire != "" {
+		configs.JWT.TokenExpire = expire
+	}
 }
 
 func loadAppConfig() configs.Configuration {

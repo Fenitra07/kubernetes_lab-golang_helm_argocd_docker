@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: admin-dashboard-db-seed
+  namespace: default
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed-database
+          image: admin-dashboard:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+          command:
+            - sh
+            - -c
+            - |
+              until mysqladmin ping -h mysql --silent; do
+                echo "Waiting for MySQL..."
+                sleep 2
+              done
+              mysql -h mysql -uroot -p"$MYSQL_ROOT_PASSWORD" admin-dashboard < /app/sql/seed_reservations.sql

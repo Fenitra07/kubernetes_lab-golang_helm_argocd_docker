@@ -1,0 +1,10 @@
+server.exe
+*.exe
+*.test
+*.log
+bin/
+.git
+.gocache
+node_modules
+vendor
+.DS_Store

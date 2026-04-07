@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-dashboard-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-dashboard
+  template:
+    metadata:
+      labels:
+        app: admin-dashboard
+    spec:
+      containers:
+        - name: admin-dashboard
+          image: admin-dashboard:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env:
+            - name: ROOT_FOLDER
+              value: /app
+            - name: DB_DSN
+              value: root:root@tcp(mysql:3306)/admin-dashboard?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci
+            - name: API_HOST
+              value: "0.0.0.0"
+            - name: API_PORT
+              value: "8081"
