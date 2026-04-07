@@ -34,7 +34,7 @@ MySQL Database
 
 **Clean Architecture implémentée :**
 
-- **Domain Layer** : Entités métier pures (User, Flight, Reservation, etc.)
+- **Domain Layer** : Entités métier pures (Login, Reservation)
 - **Application Layer** : Use cases et DTOs (logique métier)
 - **Infrastructure Layer** : Controllers HTTP, Repositories GORM, WebSocket
 
@@ -92,33 +92,18 @@ kubernetes_lab-golang_helm_argocd_docker/
 ### Gestion des utilisateurs
 
 - Inscription/connexion avec JWT
-- Profils utilisateurs (passagers, compagnies aériennes, administrateurs)
-- Gestion des portefeuilles (wallet)
+- Gestion des profils utilisateurs
 
-### Gestion des vols
+### Réservations de vol
 
-- Catalogue des vols avec détails (départ, arrivée, horaires, prix)
-- Recherche et filtrage des vols avec Elasticsearch
-- Gestion des catégories de vols
-
-### Réservations et paiements
-
-- Réservation de billets d'avion
-- Processus de paiement intégré
-- Gestion du panier de réservation
+- Création de réservations
+- Gestion des réservations existantes
 - Suivi des réservations
-
-### Gestion opérationnelle
-
-- Gestion des passagers
-- Émission de cartes d'embarquement
-- Notifications temps réel via WebSocket
 
 ### Administration
 
 - Dashboard administrateur (AeroAdmin)
-- Gestion des compagnies aériennes
-- Statistiques des réservations et ventes
+- Gestion des réservations
 
 ---
 
@@ -129,15 +114,8 @@ kubernetes_lab-golang_helm_argocd_docker/
 **Tables principales :**
 
 **Tables principales :**
-- `users` : Utilisateurs (passagers, administrateurs, compagnies)
-- `flights` : Vols disponibles (départ, arrivée, horaires, prix)
-- `categories` : Catégories de vols (économique, business, première classe)
-- `reservations` : Réservations de passagers
-- `reservation_items` : Détails des réservations (sièges, options)
-- `payments` : Transactions de paiement
-- `boarding_passes` : Cartes d'embarquement
-- `wallets` : Portefeuilles utilisateurs
-- `wallet_transactions` : Historique des transactions
+- `login` : Informations de connexion utilisateurs
+- `reservations` : Réservations de vols
 
 ### Configuration MySQL
 
@@ -225,24 +203,20 @@ go build -o flight-reservation .
 Entités métier pures, sans dépendances externes :
 
 ```go
-type User struct {
+type Login struct {
     ID       uint   `json:"id" gorm:"primaryKey"`
-    Email    string `json:"email" gorm:"unique"`
+    Username string `json:"username" gorm:"unique"`
     Password string `json:"password"`
-    Role     string `json:"role"` // passenger, airline, admin
+    Role     string `json:"role"` // admin, user
 }
 
-type Flight struct {
-    ID            uint      `json:"id" gorm:"primaryKey"`
-    FlightNumber  string    `json:"flight_number"`
-    Departure     string    `json:"departure"`
-    Arrival       string    `json:"arrival"`
-    DepartureTime time.Time `json:"departure_time"`
-    ArrivalTime   time.Time `json:"arrival_time"`
-    Price         float64   `json:"price"`
-    CategoryID    uint      `json:"category_id"`
-    AirlineID     uint      `json:"airline_id"`
-    AvailableSeats int       `json:"available_seats"`
+type Reservation struct {
+    ID          uint      `json:"id" gorm:"primaryKey"`
+    UserID      uint      `json:"user_id"`
+    FlightID    uint      `json:"flight_id"`
+    Seats       int       `json:"seats"`
+    Status      string    `json:"status"` // confirmed, cancelled
+    CreatedAt   time.Time `json:"created_at"`
 }
 ```
 
@@ -275,12 +249,11 @@ type ReservationService interface {
 | Méthode | Endpoint               | Description                    |
 | ------- | ---------------------- | ------------------------------ |
 | POST    | `/api/auth/login`      | Connexion utilisateur          |
-| GET     | `/api/flights`         | Liste des vols disponibles     |
 | POST    | `/api/reservations`    | Créer une réservation          |
+| GET     | `/api/reservations`    | Liste des réservations         |
 | GET     | `/api/reservations/{id}` | Détails réservation           |
-| POST    | `/api/payments`        | Traiter paiement               |
-| GET     | `/api/boarding-passes`| Cartes d'embarquement          |
-| WS      | `/ws/notifications`    | Notifications temps réel       |
+| PUT     | `/api/reservations/{id}` | Modifier une réservation      |
+| DELETE  | `/api/reservations/{id}` | Supprimer une réservation     |
 
 ### Authentification JWT
 
