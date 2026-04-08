@@ -6,9 +6,9 @@
 app:
   name: admin-dashboard
   image:
-    repository: admin-dashboard        # → ghcr.io/TON_USER/admin-dashboard pour prod
+    repository: fenitra0011/admin-dashboard
     tag: latest
-    pullPolicy: IfNotPresent           # → Always pour image distante
+    pullPolicy: Always
   replicaCount: 1
   port: 8081
 
@@ -39,9 +39,9 @@ app:
 # ── Frontend Nginx ────────────────────────
 webapp:
   image:
-    repository: admin-dashboard-webapp # → ghcr.io/TON_USER/admin-dashboard-webapp pour prod
+    repository: fenitra0011/admin-dashboard-webapp
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   replicaCount: 1
 
   resources:
