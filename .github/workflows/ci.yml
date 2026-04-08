@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  DOCKERHUB_USERNAME: Fenitra0011
+  DOCKERHUB_USERNAME: fenitra0011
   BACKEND_IMAGE: fenitra0011/admin-dashboard
   WEBAPP_IMAGE: fenitra0011/admin-dashboard-webapp
 
