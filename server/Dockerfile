@@ -2,11 +2,14 @@
 FROM golang:1.25-alpine AS builder
 WORKDIR /src
 
-COPY go.mod go.sum ./
+# Copier go.mod et go.sum depuis server/ (contexte = racine du projet)
+COPY server/go.mod server/go.sum ./
 RUN go mod download
 
-COPY . .
-WORKDIR /src/server
+# Copier tout le code source de server/
+COPY server/ .
+
+# Compiler depuis la racine de /src (où se trouve main.go)
 RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/admin-dashboard .
 
 # final runtime image

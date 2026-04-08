@@ -26,7 +26,7 @@ app:
       memory: 256Mi
 
   probes:
-    enabled: true                      # /health ajouté dans router.go
+    enabled: true # /health ajouté dans router.go
     liveness:
       path: /health
       initialDelaySeconds: 10
@@ -54,7 +54,7 @@ webapp:
 
 # ── Service backend ───────────────────────
 service:
-  type: ClusterIP                      # ClusterIP car Ingress gère l'accès externe
+  type: ClusterIP # ClusterIP car Ingress gère l'accès externe
   port: 8081
 
 # ── Ingress ──────────────────────────────
@@ -70,7 +70,7 @@ mysql:
   database: admin-dashboard
   serviceName: mysql
   port: 3306
-  rootPassword: root                   # → Sealed Secret en prod
+  rootPassword: root # → Sealed Secret en prod
 
   persistence:
     enabled: true
@@ -87,7 +87,7 @@ mysql:
 
 # ── Seed Job ─────────────────────────────
 seedJob:
-  enabled: true                        # → false après le premier déploiement
+  enabled: true # → false après le premier déploiement
 
 # ── Namespace ────────────────────────────
 namespace: default
