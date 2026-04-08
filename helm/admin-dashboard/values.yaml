@@ -1,0 +1,93 @@
+# ───────────────────────────────────────────
+# values.yaml — admin-dashboard Helm chart
+# ───────────────────────────────────────────
+
+# ── Backend Go ───────────────────────────
+app:
+  name: admin-dashboard
+  image:
+    repository: admin-dashboard        # → ghcr.io/TON_USER/admin-dashboard pour prod
+    tag: latest
+    pullPolicy: IfNotPresent           # → Always pour image distante
+  replicaCount: 1
+  port: 8081
+
+  env:
+    rootFolder: /app
+    apiHost: "0.0.0.0"
+    apiPort: "8081"
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  probes:
+    enabled: true                      # /health ajouté dans router.go
+    liveness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 15
+    readiness:
+      path: /health
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+# ── Frontend Nginx ────────────────────────
+webapp:
+  image:
+    repository: admin-dashboard-webapp # → ghcr.io/TON_USER/admin-dashboard-webapp pour prod
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# ── Service backend ───────────────────────
+service:
+  type: ClusterIP                      # ClusterIP car Ingress gère l'accès externe
+  port: 8081
+
+# ── Ingress ──────────────────────────────
+ingress:
+  enabled: true
+  host: admin-dashboard.local
+  # /api/* → Go backend
+  # /      → Nginx frontend
+
+# ── MySQL ────────────────────────────────
+mysql:
+  image: mysql:8.1
+  database: admin-dashboard
+  serviceName: mysql
+  port: 3306
+  rootPassword: root                   # → Sealed Secret en prod
+
+  persistence:
+    enabled: true
+    size: 5Gi
+    accessMode: ReadWriteOnce
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ── Seed Job ─────────────────────────────
+seedJob:
+  enabled: true                        # → false après le premier déploiement
+
+# ── Namespace ────────────────────────────
+namespace: default

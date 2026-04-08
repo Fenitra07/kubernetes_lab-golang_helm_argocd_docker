@@ -1,6 +1,8 @@
 version: "3.9"
 
 services:
+
+  # ── Base de données ─────────────────────────────────────
   db:
     image: mysql:8.1
     container_name: admin-dashboard-db
@@ -18,11 +20,13 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Backend Go ──────────────────────────────────────────
   app:
     build:
       context: .
       dockerfile: server/Dockerfile
     container_name: admin-dashboard-app
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -31,11 +35,25 @@ services:
       DB_DSN: root:root@tcp(db:3306)/admin-dashboard?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci
       API_HOST: 0.0.0.0
       API_PORT: "8081"
+    # En local uniquement — en prod, l'accès passe par Nginx
     ports:
       - "8081:8081"
     volumes:
       - ./server/configs:/app/configs:ro
       - ./server/sql:/app/sql:ro
+
+  # ── Frontend Nginx ──────────────────────────────────────
+  webapp:
+    build:
+      context: ./webApp
+      dockerfile: Dockerfile
+    container_name: admin-dashboard-webapp
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    # nginx.conf fait le proxy /api/ → app:8081
 
 volumes:
   db_data:

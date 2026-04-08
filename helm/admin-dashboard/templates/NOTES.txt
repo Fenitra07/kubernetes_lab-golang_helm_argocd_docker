@@ -1,0 +1,41 @@
+✅ admin-dashboard déployé avec succès !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 Accès à l'application
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{- if .Values.ingress.enabled }}
+Via Ingress :
+  http://{{ .Values.ingress.host }}
+
+  ⚠ Assure-toi d'avoir cette ligne dans /etc/hosts :
+    127.0.0.1  {{ .Values.ingress.host }}
+{{- end }}
+
+Via NodePort :
+  http://localhost:{{ .Values.service.nodePort }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🗄 MySQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Host interne : {{ .Values.mysql.serviceName }}:{{ .Values.mysql.port }}
+  Database     : {{ .Values.mysql.database }}
+  Password     : (voir Secret mysql-secret)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 Commandes utiles
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  kubectl get pods -n {{ .Values.namespace }}
+  kubectl logs -f deployment/{{ .Release.Name }}-app -n {{ .Values.namespace }}
+  kubectl logs -f deployment/{{ .Release.Name }}-mysql -n {{ .Values.namespace }}
+
+{{- if .Values.seedJob.enabled }}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌱 Seed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Le job de seed a été lancé automatiquement (post-install hook).
+  Vérifie : kubectl get jobs -n {{ .Values.namespace }}
+
+  Après le seed, désactive-le pour les prochains upgrades :
+    helm upgrade {{ .Release.Name }} ./helm/admin-dashboard --set seedJob.enabled=false
+{{- end }}

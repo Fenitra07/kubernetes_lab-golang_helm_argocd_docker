@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-app
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "admin-dashboard.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "admin-dashboard.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "admin-dashboard.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.app.name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+          env:
+            - name: ROOT_FOLDER
+              value: {{ .Values.app.env.rootFolder | quote }}
+            - name: DB_DSN
+              value: "root:$(MYSQL_ROOT_PASSWORD)@tcp({{ .Values.mysql.serviceName }}:{{ .Values.mysql.port }})/{{ .Values.mysql.database }}?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+            - name: API_HOST
+              value: {{ .Values.app.env.apiHost | quote }}
+            - name: API_PORT
+              value: {{ .Values.app.env.apiPort | quote }}
+          {{- with .Values.app.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.app.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.liveness.path }}
+              port: {{ .Values.app.port }}
+            initialDelaySeconds: {{ .Values.app.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.probes.liveness.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.app.probes.readiness.path }}
+              port: {{ .Values.app.port }}
+            initialDelaySeconds: {{ .Values.app.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.probes.readiness.periodSeconds }}
+          {{- end }}

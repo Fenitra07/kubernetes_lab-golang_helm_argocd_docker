@@ -1,0 +1,6 @@
+apiVersion: v2
+name: admin-dashboard
+description: Helm chart pour admin-dashboard (Go + MySQL)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

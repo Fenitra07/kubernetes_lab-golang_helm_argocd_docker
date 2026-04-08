@@ -2339,7 +2339,7 @@
           let deleteTarget = null;
           let selectedClass = null;
           let editingReservationId = null;
-          const API_BASE_URL = "http://localhost:8081";
+          const API_BASE_URL = "/api"; // URL relative — Nginx proxy vers le backend Go
           const ITEMS_PER_PAGE = 10;
           let currentPage = 1;
 
@@ -2437,7 +2437,7 @@
               showPage("home");
             } catch (error) {
               err.textContent =
-                "Connexion impossible au serveur. Vérifiez que l'API tourne sur localhost:8081.";
+                "Connexion impossible au serveur.";
               err.classList.remove("hidden");
             } finally {
               btn.disabled = false;

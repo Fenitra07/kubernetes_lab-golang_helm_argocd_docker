@@ -1,0 +1,40 @@
+{{- if .Values.seedJob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-db-seed
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "admin-dashboard.labels" . | nindent 4 }}
+  annotations:
+    # Le job ne tourne qu'au premier helm install, pas aux upgrades
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed-database
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: mysql-root-password
+          command:
+            - sh
+            - -c
+            - |
+              echo "Attente de MySQL..."
+              until mysqladmin ping -h {{ .Values.mysql.serviceName }} --silent; do
+                echo "MySQL pas encore prêt, retry dans 2s..."
+                sleep 2
+              done
+              echo "MySQL prêt. Lancement du seed..."
+              mysql -h {{ .Values.mysql.serviceName }} -uroot -p"$MYSQL_ROOT_PASSWORD" {{ .Values.mysql.database }} < /app/sql/seed_reservations.sql
+              echo "Seed terminé."
+{{- end }}

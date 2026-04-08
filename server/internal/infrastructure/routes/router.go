@@ -8,6 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Préfixe API — toutes les routes sont sous /api
+// Nginx route /api/* vers ce service, / vers le frontend
+const apiPrefix = "/api"
+
 // Router gère la configuration des routes
 type Router struct {
 	reservationController presenters.ReservationPresenter
@@ -30,17 +34,26 @@ func (r *Router) SetupRouter(apiAddress string) {
 	ginRouter := gin.Default()
 	ginRouter.Use(corsMiddleware())
 
-	authGroup := ginRouter.Group(config.AuthPath)
-	{
-		authGroup.POST(config.Login, r.authController.Login)
-	}
+	// Health check — utilisé par les probes Kubernetes
+	ginRouter.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
 
-	reservationGroup := ginRouter.Group(config.ReservationPath)
+	// Groupe API — préfixe /api
+	api := ginRouter.Group(apiPrefix)
 	{
-		reservationGroup.GET("", r.reservationController.ListReservations)
-		reservationGroup.POST("", r.reservationController.CreateReservation)
-		reservationGroup.PUT(config.ReservationID, r.reservationController.UpdateReservation)
-		reservationGroup.DELETE(config.ReservationID, r.reservationController.DeleteReservation)
+		authGroup := api.Group(config.AuthPath)
+		{
+			authGroup.POST(config.Login, r.authController.Login)
+		}
+
+		reservationGroup := api.Group(config.ReservationPath)
+		{
+			reservationGroup.GET("", r.reservationController.ListReservations)
+			reservationGroup.POST("", r.reservationController.CreateReservation)
+			reservationGroup.PUT(config.ReservationID, r.reservationController.UpdateReservation)
+			reservationGroup.DELETE(config.ReservationID, r.reservationController.DeleteReservation)
+		}
 	}
 
 	ginRouter.Run(apiAddress)
