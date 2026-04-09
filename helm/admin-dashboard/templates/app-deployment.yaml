@@ -24,13 +24,13 @@ spec:
           env:
             - name: ROOT_FOLDER
               value: {{ .Values.app.env.rootFolder | quote }}
-            - name: DB_DSN
-              value: "root:$(MYSQL_ROOT_PASSWORD)@tcp({{ .Values.mysql.serviceName }}:{{ .Values.mysql.port }})/{{ .Values.mysql.database }}?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci"
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-root-password
+            - name: DB_DSN
+              value: "root:$(MYSQL_ROOT_PASSWORD)@tcp({{ .Values.mysql.serviceName }}:{{ .Values.mysql.port }})/{{ .Values.mysql.database }}?parseTime=true&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci"
             - name: API_HOST
               value: {{ .Values.app.env.apiHost | quote }}
             - name: API_PORT
