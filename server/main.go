@@ -28,7 +28,7 @@ func init() {
 func main() {
 	// Initialisation de la base de données
 	db := config.DatabaseConnex()
-	if err := db.AutoMigrate(&repository.ReservationModel{}); err != nil {
+	if err := db.AutoMigrate(&repository.ReservationModel{}, &repository.UserModel{}); err != nil {
 		log.Fatalf("Failed to migrate reservation schema: %v", err)
 	}
 
