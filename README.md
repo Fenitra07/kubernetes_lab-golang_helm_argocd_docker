@@ -1,42 +1,60 @@
-# Flight Reservation Management Application — Go Web App with Clean Architecture
+# AeroAdmin — Flight Reservation Management Application
 
-## Environnement utilisé
+Application web de gestion de réservations aériennes, construite avec Go (Clean Architecture), déployée via Docker Compose en local et Kubernetes (Helm) en production, avec CI/CD GitHub Actions.
 
-- Windows 11 + WSL2 (Ubuntu 24.04)
-- Go 1.25
-- Docker Desktop (driver pour les conteneurs)
-- Kubernetes (Minikube ou cluster local)
-- MySQL 8.0 (base de données)
-- GORM (ORM Go)
-- Gin (framework HTTP)
-- JWT (authentification)
-- WebSocket (notifications temps réel)
+---
+
+## Stack technique
+
+| Composant        | Technologie                       |
+| ---------------- | --------------------------------- |
+| Backend          | Go 1.25 + Gin (HTTP) + GORM (ORM) |
+| Frontend         | HTML/CSS/JS servi par nginx       |
+| Base de données  | MySQL 8.1                         |
+| Containerisation | Docker + Docker Compose           |
+| Orchestration    | Kubernetes (Docker Desktop / EKS) |
+| Packaging K8s    | Helm                              |
+| CI/CD            | GitHub Actions → Docker Hub       |
+| GitOps           | ArgoCD (prévu)                    |
 
 ---
 
 ## Architecture globale
 
 ```
-Client HTTP/WebSocket
+Client HTTP (navigateur)
      ↓
-Gin Router (ports 8080/8443)
+nginx (frontend + reverse proxy /api/*)
      ↓
-Middleware (CORS, JWT)
+Gin Router (port 8081)
+     ↓
+Middleware (CORS)
      ↓
 Controllers (HTTP handlers)
      ↓
-Services (business logic)
+Use Cases (logique métier)
      ↓
-Repositories (data access)
+Repositories (accès données GORM)
      ↓
 MySQL Database
 ```
 
-**Clean Architecture implémentée :**
+### Clean Architecture
 
-- **Domain Layer** : Entités métier pures (Login, Reservation)
-- **Application Layer** : Use cases et DTOs (logique métier)
-- **Infrastructure Layer** : Controllers HTTP, Repositories GORM, WebSocket
+```
+server/internal/
+├── domain/entities/        ← Entités métier pures
+├── application/
+│   ├── usecases/           ← Logique métier (login, réservations)
+│   └── dtos/               ← Data Transfer Objects
+├── interfaces/
+│   ├── presenters/         ← Handlers HTTP (Gin)
+│   └── repository/         ← Interfaces repository
+└── infrastructure/
+    ├── repository/         ← Implémentation GORM
+    ├── controllers/        ← Auth + Reservation controllers
+    └── routes/             ← Router Gin
+```
 
 ---
 
@@ -44,389 +62,126 @@ MySQL Database
 
 ```
 kubernetes_lab-golang_helm_argocd_docker/
-├── compose.yaml              ← Configuration Docker Compose
-├── go.mod                    ← Dépendances Go
-├── main.go                   ← Point d'entrée de l'application
-├── README.md                 ← Cette documentation
-├── configs/                  ← Configurations YAML
-│   ├── load.go
-│   ├── template copy.yaml
-│   └── template.yaml
-├── docs/                     ← Documentation API (Swagger)
-│   ├── docs.go
-│   ├── swagger.json
-│   └── swagger.yaml
-├── internal/                 ← Code source (Clean Architecture)
-│   ├── config/               ← Configuration de l'app
-│   ├── controller/           ← Handlers HTTP
-│   ├── elastic/              ← Recherche Elasticsearch
-│   ├── entities/             ← Entités domaine
-│   ├── helper/               ← Utilitaires
-│   ├── jwt/                  ← Gestion des tokens JWT
-│   ├── middleware/           ← Middlewares HTTP
-│   ├── routes/               ← Définition des routes
-│   ├── service/              ← Services métier
-│   ├── websocket/            ← Gestion WebSocket
-│   └── ws/                   ← WebSocket handlers
-├── sql/                      ← Scripts SQL et dumps
-│   ├── Dump20250919.sql
-│   ├── Dumplivraisons20251024.sql
-│   ├── Livraison_20251028.sql
-│   ├── livraison.sql
-│   ├── order.sql
-│   ├── paiement.sql
-│   └── patch/                ← Patches de base de données
-├── uploads/                  ← Fichiers uploadés (images vols, compagnies)
-└── server/                   ← Version serveur séparée
-    ├── go.mod
-    ├── main.go
-    ├── configs/
-    ├── internal/
-    └── ...
+├── compose.yaml                  ← Docker Compose (dev local)
+├── server/                       ← Backend Go
+│   ├── Dockerfile
+│   ├── main.go
+│   ├── go.mod
+│   ├── configs/                  ← config.yaml (DSN, ports, CORS)
+│   ├── internal/                 ← Clean Architecture (voir ci-dessus)
+│   └── sql/
+│       └── seed_reservations.sql ← Données initiales
+├── webApp/                       ← Frontend nginx
+│   ├── Dockerfile
+│   ├── nginx.conf                ← Reverse proxy /api/ → backend
+│   └── html/                    ← Fichiers statiques
+├── helm/
+│   └── admin-dashboard/          ← Chart Helm
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
+│           ├── app-deployment.yaml
+│           ├── app-service.yaml
+│           ├── webapp-deployment.yaml
+│           ├── webapp-service.yaml
+│           ├── mysql-deployment.yaml
+│           ├── mysql-service.yaml
+│           ├── mysql-pvc.yaml
+│           ├── mysql-secret.yaml
+│           ├── ingress.yaml
+│           └── seed-job.yaml
+└── .github/workflows/            ← CI GitHub Actions
+    └── ci.yaml                   ← Build & Push Docker Hub
 ```
-
----
-
-## Fonctionnalités principales
-
-### Gestion des utilisateurs
-
-- Inscription/connexion avec JWT
-- Gestion des profils utilisateurs
-
-### Réservations de vol
-
-- Création de réservations
-- Gestion des réservations existantes
-- Suivi des réservations
-
-### Administration
-
-- Dashboard administrateur (AeroAdmin)
-- Gestion des réservations
-
----
-
-## Base de données
-
-### Schéma principal
-
-**Tables principales :**
-
-**Tables principales :**
-- `login` : Informations de connexion utilisateurs
-- `reservations` : Réservations de vols
-
-### Configuration MySQL
-
-```yaml
-database:
-  host: localhost
-  port: 3306
-  user: root
-  password: password
-  dbname: flight_reservations
-  charset: utf8mb4
-```
-
-### Scripts de migration
-
-Les dumps SQL sont dans `sql/` :
-
-- `Dump20250919.sql` : Dump complet initial
-- `livraison.sql` : Schéma des réservations et embarquement
-- Patches dans `patch/` pour mises à jour incrémentielles
-
----
-
-## Mise en place de l'environnement
-
-### 1. Prérequis
-
-```bash
-# Installer Go 1.25
-# https://golang.org/dl/
-
-# Installer Docker Desktop
-# https://www.docker.com/products/docker-desktop
-
-# Installer Minikube pour Kubernetes local
-# https://minikube.sigs.k8s.io/docs/start/
-```
-
-### 2. Cloner le projet
-
-```bash
-git clone git@github.com:Fenitra07/kubernetes_lab-golang_helm_argocd_docker.git
-cd kubernetes_lab-golang_helm_argocd_docker
-```
-
-### 3. Configuration
-
-Copier le template de configuration :
-
-```bash
-cp configs/template.yaml configs/app.yaml
-# Éditer configs/app.yaml avec vos paramètres
-```
-
-### 4. Lancer avec Docker Compose (développement)
-
-```bash
-docker-compose up -d
-```
-
-Cela démarre :
-
-- Application Go (port 8080)
-- MySQL (port 3306)
-- Elasticsearch (port 9200)
-
-### 5. Tests unitaires
-
-```bash
-go test ./...
-```
-
-### 6. Build de production
-
-```bash
-go build -o flight-reservation .
-```
-
----
-
-## Architecture Clean Architecture
-
-### Domain Layer (`internal/entities/`)
-
-Entités métier pures, sans dépendances externes :
-
-```go
-type Login struct {
-    ID       uint   `json:"id" gorm:"primaryKey"`
-    Username string `json:"username" gorm:"unique"`
-    Password string `json:"password"`
-    Role     string `json:"role"` // admin, user
-}
-
-type Reservation struct {
-    ID          uint      `json:"id" gorm:"primaryKey"`
-    UserID      uint      `json:"user_id"`
-    FlightID    uint      `json:"flight_id"`
-    Seats       int       `json:"seats"`
-    Status      string    `json:"status"` // confirmed, cancelled
-    CreatedAt   time.Time `json:"created_at"`
-}
-```
-
-### Application Layer (`internal/service/`)
-
-Use cases et logique métier :
-
-```go
-type ReservationService interface {
-    CreateReservation(ctx context.Context, req CreateReservationRequest) (*Reservation, error)
-    GetReservation(ctx context.Context, id uint) (*Reservation, error)
-    UpdateReservationStatus(ctx context.Context, id uint, status string) error
-}
-```
-
-### Infrastructure Layer
-
-**Controllers** (`internal/controller/`) : Handlers HTTP avec Gin
-
-**Repositories** (`internal/infrastructure/repository/`) : Accès données avec GORM
-
-**WebSocket** (`internal/websocket/`) : Notifications temps réel
 
 ---
 
 ## API REST
 
-### Endpoints principaux
+| Méthode | Endpoint                | Description               |
+| ------- | ----------------------- | ------------------------- |
+| POST    | `/api/auth/login`       | Connexion                 |
+| GET     | `/api/reservations`     | Liste des réservations    |
+| POST    | `/api/reservations`     | Créer une réservation     |
+| PUT     | `/api/reservations/:id` | Modifier une réservation  |
+| DELETE  | `/api/reservations/:id` | Supprimer une réservation |
+| GET     | `/health`               | Health check              |
 
-| Méthode | Endpoint               | Description                    |
-| ------- | ---------------------- | ------------------------------ |
-| POST    | `/api/auth/login`      | Connexion utilisateur          |
-| POST    | `/api/reservations`    | Créer une réservation          |
-| GET     | `/api/reservations`    | Liste des réservations         |
-| GET     | `/api/reservations/{id}` | Détails réservation           |
-| PUT     | `/api/reservations/{id}` | Modifier une réservation      |
-| DELETE  | `/api/reservations/{id}` | Supprimer une réservation     |
-
-### Authentification JWT
+### Exemple login
 
 ```bash
-# Login
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password"}'
+  -d '{"login":"test@","password":"test"}'
 
-# Réponse : {"token":"jwt_token_here"}
-```
-
-Utiliser le token dans les headers :
-
-```bash
-curl -H "Authorization: Bearer jwt_token_here" \
-  http://localhost:8080/api/protected/endpoint
+# Réponse :
+# {"id":1,"mail":"test@","motdepasse":"test","status":200,"message":"Connexion réussie"}
 ```
 
 ---
 
-## Déploiement Docker/Kubernetes
+## Base de données
 
-### Build de l'image
+### Schéma
 
-```bash
-docker build -t flight-reservation:latest .
-```
+**Table `login`**
 
-### Déploiement local avec Minikube
+| Colonne    | Type              | Description    |
+| ---------- | ----------------- | -------------- |
+| id         | bigint (PK, auto) | Identifiant    |
+| mail       | longtext          | Adresse e-mail |
+| motdepasse | longtext          | Mot de passe   |
 
-```bash
-# Démarrer Minikube
-minikube start
+**Table `reservations`**
 
-# Déployer
-kubectl apply -f k8s/
+Voir `server/sql/seed_reservations.sql` pour le schéma complet.
 
-# Vérifier
-kubectl get pods
-kubectl get services
-```
-
-### Services déployés
-
-- **flight-reservation-app** : Application principale (port 8080)
-- **flight-reservation-db** : Base MySQL avec PersistentVolume
-- **flight-reservation-seed** : Job d'initialisation de la DB
-- **flight-reservation-ingress** : Accès externe via Ingress
-
----
-
-## Tests et qualité
-
-### Tests unitaires
+### Ajouter un utilisateur manuellement
 
 ```bash
-# Tests complets
-go test ./internal/... -v
-
-# Coverage
-go test ./internal/... -coverprofile=coverage.out
-go tool cover -html=coverage.out
-```
-
-**Couverture :**
-
-- Domain entities : 95%
-- Application services : 90%
-- Infrastructure controllers : 85%
-
-### Linting et formatage
-
-```bash
-# Formatter le code
-go fmt ./...
-
-# Vérifier les imports
-go mod tidy
-
-# Linting avec golangci-lint
-golangci-lint run
+docker exec -i admin-dashboard-db mysql -uroot -proot admin-dashboard -e "
+INSERT INTO login (mail, motdepasse) VALUES ('admin@example.com', 'monmotdepasse');
+"
 ```
 
 ---
 
-## Monitoring et logs
+## CI/CD — GitHub Actions
 
-### Health checks
+À chaque `git push` sur `main` :
 
-```bash
-curl http://localhost:8080/health
-# {"status":"ok","database":"connected","websocket":"active"}
-```
+1. **Tests Go** — `go test ./...`
+2. **Build & Push** des images Docker sur Docker Hub :
+   - `fenitra0011/admin-dashboard:latest` (backend Go)
+   - `fenitra0011/admin-dashboard-webapp:latest` (frontend nginx)
 
-### Logs structurés
-
-L'application utilise le package `log` standard avec format JSON pour les logs production.
-
-### Métriques
-
-Endpoints Prometheus-ready :
-
-- `/metrics` : Métriques application
-- `/debug/vars` : Variables de debug Go
+Les images sont ensuite utilisées par le chart Helm via `values.yaml`.
 
 ---
 
 ## Concepts clés
 
-| Concept            | Explication                                  |
-| ------------------ | -------------------------------------------- |
-| Clean Architecture | Séparation en couches pour maintenabilité    |
-| GORM               | ORM Go pour interactions base de données     |
-| Gin                | Framework HTTP rapide et middleware-rich     |
-| JWT                | Authentification stateless sécurisée         |
-| WebSocket          | Communications bidirectionnelles temps réel  |
-| Elasticsearch      | Recherche full-text performante              |
-| Docker             | Containerisation pour déploiement consistant |
-| Kubernetes         | Orchestration pour scalabilité et résilience |
+| Concept            | Rôle dans ce projet                              |
+| ------------------ | ------------------------------------------------ |
+| Clean Architecture | Séparation domain / application / infrastructure |
+| GORM               | ORM Go pour MySQL                                |
+| Gin                | Framework HTTP, routing, middlewares CORS        |
+| Docker Compose     | Environnement de développement local             |
+| Helm               | Packaging et déploiement Kubernetes              |
+| GitHub Actions     | Build et push automatiques des images            |
+| ArgoCD             | GitOps — déploiement automatique K8s (à venir)   |
 
 ---
 
-## Résultat final
+## Status du 09/04/2026 à 23h11
 
-```
-✅ Architecture Clean implémentée
-✅ Tests unitaires (couverture >85%)
-✅ API REST complète avec JWT
-✅ Base MySQL avec migrations
-✅ WebSocket pour notifications
-✅ Elasticsearch pour recherche
-✅ Docker containerisé
-✅ Kubernetes orchestré
-✅ Documentation Swagger générée
-```
+✅ Docker Compose — validation locale
+✅ GitHub Actions CI — build & push Docker Hub automatique
+✅ Helm Chart — déployé sur Kubernetes docker-desktop
+✅ nginx.conf — fix upstream Docker vs K8s
+✅ app-deployment.yaml — fix ordre variables d'env
+✅ MySQL + seed — données persistantes sur PVC
+✅ Stack complète — 3 pods Running, 0 restart
+✅ README mis à jour — documentation complète
 
----
-
-## Commandes utiles
-
-```bash
-# Développement
-go run main.go                    # Lancer l'app
-go test ./...                     # Tests complets
-docker-compose up -d             # Environnement local
-
-# Production
-go build -o flight-reservation .       # Build binaire
-docker build -t flight-reservation .   # Build image
-kubectl apply -f k8s/           # Déploiement K8s
-
-# Base de données
-mysql -u root -p car_delivery < sql/Dump20250919.sql  # Import dump
-
-# Debugging
-kubectl logs -f deployment/flight-reservation-app  # Logs K8s
-docker logs flight-reservation                    # Logs Docker
-```
-
----
-
-## Support et contribution
-
-Pour contribuer :
-
-1. Fork le projet
-2. Créer une branche feature
-3. Commiter les changements
-4. Push et créer une PR
-
-Issues et discussions sur GitHub.
-
----
-
-_Application développée avec Go 1.25, architecture propre et déploiement cloud-ready._
+_Application développée avec Go 1.25 — architecture propre, déploiement cloud-ready._
