@@ -1423,9 +1423,7 @@
 
         <button class="btn-primary" onclick="doLogin()">Se connecter</button>
 
-        <p class="login-footer">
-          Identifiants de démo: test@ / test
-        </p>
+        <p class="login-footer">Identifiants de démo: test@ / test</p>
       </div>
     </div>
 
@@ -2333,162 +2331,181 @@
     </div>
 
     <script>
-          /* ===== DATA ===== */
-          let allReservations = [];
-          let tableData = [];
-          let deleteTarget = null;
-          let selectedClass = null;
-          let editingReservationId = null;
-          const API_BASE_URL = "/api"; // URL relative — Nginx proxy vers le backend Go
-          const ITEMS_PER_PAGE = 10;
-          let currentPage = 1;
+      /* ===== DATA ===== */
+      let allReservations = [];
+      let tableData = [];
+      let deleteTarget = null;
+      let selectedClass = null;
+      let editingReservationId = null;
+      const API_BASE_URL =
+        window.location.port === "5500"
+          ? "http://localhost:8081/api" // Live Server local
+          : "/api"; // Docker / K8s via Nginx
+      const ITEMS_PER_PAGE = 10;
+      let currentPage = 1;
 
-          async function loadReservations() {
-            try {
-              const response = await fetch(`${API_BASE_URL}/reservations`);
-              if (!response.ok) {
-                throw new Error("Unable to load reservations");
-              }
-              const payload = await response.json();
-              allReservations = payload.data || [];
-              tableData = [...allReservations];
-              renderTable(tableData);
-            } catch (error) {
-              showToast("Erreur", "Impossible de charger les réservations.");
-            }
+      async function loadReservations() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/reservations`);
+          if (!response.ok) {
+            throw new Error("Unable to load reservations");
           }
+          const payload = await response.json();
+          allReservations = payload.data || [];
+          tableData = [...allReservations];
+          renderTable(tableData);
+        } catch (error) {
+          showToast("Erreur", "Impossible de charger les réservations.");
+        }
+      }
 
-          function updateStats() {
-            const total = allReservations.length;
-            const pending = allReservations.filter(r => r.statut === 'pending').length;
-            const confirmed = allReservations.filter(r => r.statut === 'confirmed').length;
-            const cancelled = allReservations.filter(r => r.statut === 'cancelled').length;
+      function updateStats() {
+        const total = allReservations.length;
+        const pending = allReservations.filter(
+          (r) => r.statut === "pending",
+        ).length;
+        const confirmed = allReservations.filter(
+          (r) => r.statut === "confirmed",
+        ).length;
+        const cancelled = allReservations.filter(
+          (r) => r.statut === "cancelled",
+        ).length;
 
-            // Update card values
-            document.querySelector('.stat-card.gold .stat-value').textContent = total.toLocaleString();
-            document.querySelector('.stat-card.jade .stat-value').textContent = pending.toLocaleString();
-            document.querySelector('.stat-card.sky .stat-value').textContent = confirmed.toLocaleString();
-            document.querySelector('.stat-card.ruby .stat-value').textContent = cancelled.toLocaleString();
+        // Update card values
+        document.querySelector(".stat-card.gold .stat-value").textContent =
+          total.toLocaleString();
+        document.querySelector(".stat-card.jade .stat-value").textContent =
+          pending.toLocaleString();
+        document.querySelector(".stat-card.sky .stat-value").textContent =
+          confirmed.toLocaleString();
+        document.querySelector(".stat-card.ruby .stat-value").textContent =
+          cancelled.toLocaleString();
 
-            // Calculate and update percentages
-            const pendingPercent = total > 0 ? ((pending / total) * 100).toFixed(1) : 0;
-            const confirmedPercent = total > 0 ? ((confirmed / total) * 100).toFixed(1) : 0;
-            const cancelledPercent = total > 0 ? ((cancelled / total) * 100).toFixed(1) : 0;
+        // Calculate and update percentages
+        const pendingPercent =
+          total > 0 ? ((pending / total) * 100).toFixed(1) : 0;
+        const confirmedPercent =
+          total > 0 ? ((confirmed / total) * 100).toFixed(1) : 0;
+        const cancelledPercent =
+          total > 0 ? ((cancelled / total) * 100).toFixed(1) : 0;
 
-            document.querySelector('.stat-card.gold .stat-change').textContent = `${pendingPercent}% en attente`;
-            document.querySelector('.stat-card.jade .stat-change').textContent = `${pendingPercent}% du total`;
-            document.querySelector('.stat-card.sky .stat-change').textContent = `${confirmedPercent}% du total`;
-            document.querySelector('.stat-card.ruby .stat-change').textContent = `${cancelledPercent}% du total`;
-          }
+        document.querySelector(".stat-card.gold .stat-change").textContent =
+          `${pendingPercent}% en attente`;
+        document.querySelector(".stat-card.jade .stat-change").textContent =
+          `${pendingPercent}% du total`;
+        document.querySelector(".stat-card.sky .stat-change").textContent =
+          `${confirmedPercent}% du total`;
+        document.querySelector(".stat-card.ruby .stat-change").textContent =
+          `${cancelledPercent}% du total`;
+      }
 
-          /* ===== PAGES ===== */
-          function showPage(name) {
-            document
-              .querySelectorAll(".page")
-              .forEach((p) => p.classList.remove("active"));
-            document.getElementById("page-" + name).classList.add("active");
-            if (name === "home") {
-              renderTable(tableData);
-              loadReservations();
-              updateStats();
-            }
-          }
+      /* ===== PAGES ===== */
+      function showPage(name) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById("page-" + name).classList.add("active");
+        if (name === "home") {
+          renderTable(tableData);
+          loadReservations();
+          updateStats();
+        }
+      }
 
-          /* ===== LOGIN ===== */
-          async function doLogin() {
-            const email = document.getElementById("login-email").value.trim();
-            const pass = document.getElementById("login-pass").value.trim();
-            const err = document.getElementById("login-error");
-            const btn = document.querySelector(".btn-primary");
+      /* ===== LOGIN ===== */
+      async function doLogin() {
+        const email = document.getElementById("login-email").value.trim();
+        const pass = document.getElementById("login-pass").value.trim();
+        const err = document.getElementById("login-error");
+        const btn = document.querySelector(".btn-primary");
 
-            if (!email || !pass) {
-              err.textContent =
-                "Veuillez saisir votre e-mail et votre mot de passe.";
-              err.classList.remove("hidden");
-              return;
-            }
+        if (!email || !pass) {
+          err.textContent =
+            "Veuillez saisir votre e-mail et votre mot de passe.";
+          err.classList.remove("hidden");
+          return;
+        }
 
-            btn.disabled = true;
-            btn.textContent = "Connexion...";
+        btn.disabled = true;
+        btn.textContent = "Connexion...";
 
-            try {
-              const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  login: email,
-                  password: pass,
-                }),
-              });
-
-              const data = await response.json().catch(() => null);
-
-              if (!response.ok) {
-                err.textContent =
-                  data?.message || "Identifiants incorrects. Réessayez.";
-                err.classList.remove("hidden");
-                return;
-              }
-
-              err.classList.add("hidden");
-              await loadReservations();
-              showPage("home");
-            } catch (error) {
-              err.textContent =
-                "Connexion impossible au serveur.";
-              err.classList.remove("hidden");
-            } finally {
-              btn.disabled = false;
-              btn.textContent = "Se connecter";
-            }
-          }
-          document.addEventListener("keydown", (e) => {
-            if (
-              e.key === "Enter" &&
-              document.getElementById("page-login").classList.contains("active")
-            )
-              doLogin();
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              login: email,
+              password: pass,
+            }),
           });
 
-          /* ===== LOGOUT ===== */
-          function doLogout() {
-            showPage("login");
+          const data = await response.json().catch(() => null);
+
+          if (!response.ok) {
+            err.textContent =
+              data?.message || "Identifiants incorrects. Réessayez.";
+            err.classList.remove("hidden");
+            return;
           }
 
-          /* ===== TABLE ===== */
-          const classBadge = {
-            Économique: "badge-eco",
-            Premium: "badge-prem",
-            VIP: "badge-vip",
-          };
-          const statusBadge = {
-            confirmed: "badge-confirmed",
-            pending: "badge-pending",
-            cancelled: "badge-cancelled",
-          };
-          const statusLabel = {
-            confirmed: "Confirmée",
-            pending: "En attente",
-            cancelled: "Annulée",
-          };
+          err.classList.add("hidden");
+          await loadReservations();
+          showPage("home");
+        } catch (error) {
+          err.textContent = "Connexion impossible au serveur.";
+          err.classList.remove("hidden");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Se connecter";
+        }
+      }
+      document.addEventListener("keydown", (e) => {
+        if (
+          e.key === "Enter" &&
+          document.getElementById("page-login").classList.contains("active")
+        )
+          doLogin();
+      });
 
-          function renderTable(data) {
-            const tbody = document.getElementById("table-body");
-            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-            const endIndex = startIndex + ITEMS_PER_PAGE;
-            const pageData = data.slice(startIndex, endIndex);
+      /* ===== LOGOUT ===== */
+      function doLogout() {
+        showPage("login");
+      }
 
-            document.getElementById("table-count").textContent =
-              `Affichage de ${pageData.length} entrée${pageData.length !== 1 ? "s" : ""} (page ${currentPage} sur ${Math.ceil(data.length / ITEMS_PER_PAGE)})`;
-            if (!pageData.length) {
-              tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--mist)">Aucune réservation trouvée.</td></tr>`;
-              return;
-            }
-            tbody.innerHTML = pageData
-              .map(
-                (r) => `
+      /* ===== TABLE ===== */
+      const classBadge = {
+        Économique: "badge-eco",
+        Premium: "badge-prem",
+        VIP: "badge-vip",
+      };
+      const statusBadge = {
+        confirmed: "badge-confirmed",
+        pending: "badge-pending",
+        cancelled: "badge-cancelled",
+      };
+      const statusLabel = {
+        confirmed: "Confirmée",
+        pending: "En attente",
+        cancelled: "Annulée",
+      };
+
+      function renderTable(data) {
+        const tbody = document.getElementById("table-body");
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const pageData = data.slice(startIndex, endIndex);
+
+        document.getElementById("table-count").textContent =
+          `Affichage de ${pageData.length} entrée${pageData.length !== 1 ? "s" : ""} (page ${currentPage} sur ${Math.ceil(data.length / ITEMS_PER_PAGE)})`;
+        if (!pageData.length) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--mist)">Aucune réservation trouvée.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = pageData
+          .map(
+            (r) => `
         <tr>
           <td style="font-size:12px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:13px">${r.id}</td>
           <td class="td-name">${r.nom}</td>
@@ -2512,339 +2529,339 @@
           </td>
         </tr>
   `,
-              )
-              .join("");
-            renderPagination(data.length);
-          }
+          )
+          .join("");
+        renderPagination(data.length);
+      }
 
-          function renderPagination(totalItems) {
-            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            const pagination = document.querySelector('.pagination');
-            const pageInfo = pagination.querySelector('.page-info');
-            const pageBtns = pagination.querySelector('.page-btns');
+      function renderPagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+        const pagination = document.querySelector(".pagination");
+        const pageInfo = pagination.querySelector(".page-info");
+        const pageBtns = pagination.querySelector(".page-btns");
 
-            // Update page info
-            pageInfo.textContent = `Page ${currentPage} sur ${totalPages || 1}`;
+        // Update page info
+        pageInfo.textContent = `Page ${currentPage} sur ${totalPages || 1}`;
 
-            // Clear existing buttons
-            pageBtns.innerHTML = '';
+        // Clear existing buttons
+        pageBtns.innerHTML = "";
 
-            // Previous button
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'page-btn';
-            prevBtn.textContent = '‹';
-            prevBtn.onclick = () => prevPage();
-            prevBtn.disabled = currentPage === 1;
-            pageBtns.appendChild(prevBtn);
+        // Previous button
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "page-btn";
+        prevBtn.textContent = "‹";
+        prevBtn.onclick = () => prevPage();
+        prevBtn.disabled = currentPage === 1;
+        pageBtns.appendChild(prevBtn);
 
-            // Page number buttons
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
+        // Page number buttons
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
 
-            for (let i = startPage; i <= endPage; i++) {
-              const pageBtn = document.createElement('button');
-              pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
-              pageBtn.textContent = i;
-              pageBtn.onclick = () => goToPage(i);
-              pageBtns.appendChild(pageBtn);
-            }
+        for (let i = startPage; i <= endPage; i++) {
+          const pageBtn = document.createElement("button");
+          pageBtn.className = `page-btn ${i === currentPage ? "active" : ""}`;
+          pageBtn.textContent = i;
+          pageBtn.onclick = () => goToPage(i);
+          pageBtns.appendChild(pageBtn);
+        }
 
-            // Next button
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'page-btn';
-            nextBtn.textContent = '›';
-            nextBtn.onclick = () => nextPage();
-            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-            pageBtns.appendChild(nextBtn);
-          }
+        // Next button
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "page-btn";
+        nextBtn.textContent = "›";
+        nextBtn.onclick = () => nextPage();
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        pageBtns.appendChild(nextBtn);
+      }
 
-          function goToPage(page) {
-            const totalPages = Math.ceil(tableData.length / ITEMS_PER_PAGE);
-            if (page >= 1 && page <= totalPages) {
-              currentPage = page;
-              renderTable(tableData);
-            }
-          }
-
-          function nextPage() {
-            const totalPages = Math.ceil(tableData.length / ITEMS_PER_PAGE);
-            if (currentPage < totalPages) {
-              currentPage++;
-              renderTable(tableData);
-            }
-          }
-
-          function prevPage() {
-            if (currentPage > 1) {
-              currentPage--;
-              renderTable(tableData);
-            }
-          }
-
-          /* ===== FILTERS ===== */
-          function applyFilters() {
-            const status = document.getElementById("filter-status").value;
-            const cls = document.getElementById("filter-class").value;
-            const search = (
-              document.getElementById("search-input").value || ""
-            ).toLowerCase();
-            const filtered = allReservations.filter((r) => {
-              if (status && statusLabel[r.statut] !== status) return false;
-              if (cls && r.classe !== cls) return false;
-              if (
-                search &&
-                !r.nom.toLowerCase().includes(search) &&
-                !r.id.toLowerCase().includes(search) &&
-                !r.route.toLowerCase().includes(search)
-              )
-                return false;
-              return true;
-            });
-            tableData = filtered;
-            renderTable(tableData);
-          }
-          function resetFilters() {
-            document.getElementById("filter-status").value = "";
-            document.getElementById("filter-class").value = "";
-            document.getElementById("filter-from").value = "";
-            document.getElementById("filter-to").value = "";
-            document.getElementById("search-input").value = "";
-            tableData = [...allReservations];
-            renderTable(tableData);
-          }
-
-          /* ===== MODAL ===== */
-          function openModal(id) {
-            deleteTarget = id;
-            document.getElementById("modal-res-id").textContent = id;
-            document.getElementById("delete-modal").classList.add("open");
-          }
-          function closeModal() {
-            document.getElementById("delete-modal").classList.remove("open");
-            deleteTarget = null;
-          }
-          async function confirmDelete() {
-            if (!deleteTarget) {
-              closeModal();
-              return;
-            }
-
-            try {
-              const response = await fetch(
-                `${API_BASE_URL}/reservations/${deleteTarget}`,
-                {
-                  method: "DELETE",
-                },
-              );
-              if (!response.ok) {
-                throw new Error("Delete failed");
-              }
-              await loadReservations();
-              updateStats();
-              showToast(
-                "Supprimée",
-                `La réservation ${deleteTarget} a été supprimée.`,
-              );
-            } catch (error) {
-              showToast("Erreur", "Impossible de supprimer la réservation.");
-            }
-            closeModal();
-          }
-          document
-            .getElementById("delete-modal")
-            .addEventListener("click", function (e) {
-              if (e.target === this) closeModal();
-            });
-
-          /* ===== TOAST ===== */
-          let toastTimer;
-          function showToast(title, msg) {
-            clearTimeout(toastTimer);
-            document.getElementById("toast-title").textContent = title;
-            document.getElementById("toast-msg").textContent = msg;
-            const t = document.getElementById("toast");
-            t.classList.add("show");
-            toastTimer = setTimeout(() => t.classList.remove("show"), 3500);
-          }
-
-          /* ===== FORM ===== */
-          function selectClass(cls) {
-            selectedClass = cls;
-            ["eco", "prem", "vip"].forEach((c) => {
-              const card = document.getElementById("card-" + c);
-              card.classList.remove(
-                "selected-eco",
-                "selected-prem",
-                "selected-vip",
-              );
-            });
-            document.getElementById("card-" + cls).classList.add("selected-" + cls);
-          }
-
-          function openNewReservation() {
-            resetForm();
-            showPage("form");
-          }
-
-          function editReservation(id) {
-            const reservation = allReservations.find((r) => r.id === id);
-            if (!reservation) return;
-            editingReservationId = id;
-            const [nom, prenom] = reservation.nom.split(" ");
-            document.getElementById("f-nom").value = nom || "";
-            document.getElementById("f-prenom").value = prenom || "";
-            document.getElementById("f-depart-ville").value =
-              reservation.depart_ville || reservation.route.split(" → ")[0] || "";
-            document.getElementById("f-arrivee-ville").value =
-              reservation.arrivee_ville || reservation.route.split(" → ")[1] || "";
-            document.getElementById("f-date-dep").value =
-              reservation.date_depart || "";
-            document.getElementById("f-date-arr").value =
-              reservation.date_arrivee || "";
-            document.getElementById("f-motif").value = reservation.motif || "";
-            document.getElementById("f-statut").value =
-              reservation.statut || "pending";
-            selectClass(
-              reservation.classe === "Premium"
-                ? "prem"
-                : reservation.classe === "VIP"
-                  ? "vip"
-                  : "eco",
-            );
-            document.getElementById("form-submit-label").textContent =
-              "Mettre à jour la réservation";
-            showPage("form");
-          }
-
-          function cancelForm() {
-            resetForm();
-            showPage("home");
-          }
-
-          async function submitForm() {
-            const nom = document.getElementById("f-nom").value.trim();
-            const prenom = document.getElementById("f-prenom").value.trim();
-            const dep = document.getElementById("f-depart-ville").value.trim();
-            const arr = document.getElementById("f-arrivee-ville").value.trim();
-            const numVol = document.getElementById("f-num-vol").value.trim();
-            const depDate = document.getElementById("f-date-dep").value;
-            const arrDate = document.getElementById("f-date-arr").value;
-            const motif = document.getElementById("f-motif").value;
-            const statut = document.getElementById("f-statut").value || "pending";
-            const docType = document.getElementById("f-doc-type").value;
-            const bagages = document.getElementById("f-bagages").value;
-            const special = document.getElementById("f-special").value;
-            const notes = document.getElementById("f-notes").value.trim();
-
-            if (!nom || !prenom || !dep || !arr || !depDate || !motif) {
-              showToast(
-                "Champs manquants",
-                "Veuillez remplir tous les champs obligatoires.",
-              );
-              return;
-            }
-
-            const classeLabel = { eco: "Économique", prem: "Premium", vip: "VIP" };
-            const dateStr = new Date(depDate).toLocaleDateString("fr-FR", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            });
-
-            const payload = {
-              nom: nom,
-              prenom: prenom,
-              document_id: document.getElementById("f-cni").value.trim(),
-              document_type: docType,
-              telephone: document.getElementById("f-tel").value.trim(),
-              email: document.getElementById("f-email").value.trim(),
-              depart_ville: dep,
-              arrivee_ville: arr,
-              vol_numero: numVol,
-              date_depart: depDate,
-              date_arrivee: arrDate,
-              motif: motif,
-              bagages: bagages,
-              classe: classeLabel[selectedClass] || "Économique",
-              statut: statut,
-              special: special,
-              notes: notes,
-              route: `${dep} → ${arr}`,
-              depart: dateStr,
-            };
-
-            try {
-              const endpoint = editingReservationId
-                ? `${API_BASE_URL}/reservations/${editingReservationId}`
-                : `${API_BASE_URL}/reservations`;
-              const method = editingReservationId ? "PUT" : "POST";
-              const response = await fetch(endpoint, {
-                method: method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-              });
-
-              if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                throw new Error(errorBody?.message || "Erreur serveur");
-              }
-
-              const result = await response.json();
-              await loadReservations();
-              updateStats();
-              showToast(
-                editingReservationId
-                  ? "Réservation mise à jour"
-                  : "Réservation créée",
-                editingReservationId
-                  ? `${editingReservationId} a été modifiée avec succès.`
-                  : `${result.data.id} a été enregistrée avec succès.`,
-              );
-              resetForm();
-              setTimeout(() => showPage("home"), 900);
-            } catch (error) {
-              showToast(
-                "Erreur",
-                error.message || "Impossible d'enregistrer la réservation.",
-              );
-            }
-          }
-
-          function resetForm() {
-            [
-              "f-nom",
-              "f-prenom",
-              "f-cni",
-              "f-tel",
-              "f-email",
-              "f-depart-ville",
-              "f-arrivee-ville",
-              "f-num-vol",
-              "f-date-dep",
-              "f-date-arr",
-              "f-notes",
-            ].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            document.getElementById("f-doc-type").value =
-              "Carte nationale d'identité";
-            document.getElementById("f-bagages").value = "0 bagage";
-            document.getElementById("f-special").value = "Aucun";
-            document.getElementById("f-statut").value = "pending";
-            selectedClass = null;
-            editingReservationId = null;
-            document.getElementById("form-submit-label").textContent =
-              "Soumettre la Réservation";
-            ["eco", "prem", "vip"].forEach((c) => {
-              document
-                .getElementById("card-" + c)
-                .classList.remove("selected-eco", "selected-prem", "selected-vip");
-            });
-          }
-
-          /* init */
+      function goToPage(page) {
+        const totalPages = Math.ceil(tableData.length / ITEMS_PER_PAGE);
+        if (page >= 1 && page <= totalPages) {
+          currentPage = page;
           renderTable(tableData);
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(tableData.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTable(tableData);
+        }
+      }
+
+      function prevPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTable(tableData);
+        }
+      }
+
+      /* ===== FILTERS ===== */
+      function applyFilters() {
+        const status = document.getElementById("filter-status").value;
+        const cls = document.getElementById("filter-class").value;
+        const search = (
+          document.getElementById("search-input").value || ""
+        ).toLowerCase();
+        const filtered = allReservations.filter((r) => {
+          if (status && statusLabel[r.statut] !== status) return false;
+          if (cls && r.classe !== cls) return false;
+          if (
+            search &&
+            !r.nom.toLowerCase().includes(search) &&
+            !r.id.toLowerCase().includes(search) &&
+            !r.route.toLowerCase().includes(search)
+          )
+            return false;
+          return true;
+        });
+        tableData = filtered;
+        renderTable(tableData);
+      }
+      function resetFilters() {
+        document.getElementById("filter-status").value = "";
+        document.getElementById("filter-class").value = "";
+        document.getElementById("filter-from").value = "";
+        document.getElementById("filter-to").value = "";
+        document.getElementById("search-input").value = "";
+        tableData = [...allReservations];
+        renderTable(tableData);
+      }
+
+      /* ===== MODAL ===== */
+      function openModal(id) {
+        deleteTarget = id;
+        document.getElementById("modal-res-id").textContent = id;
+        document.getElementById("delete-modal").classList.add("open");
+      }
+      function closeModal() {
+        document.getElementById("delete-modal").classList.remove("open");
+        deleteTarget = null;
+      }
+      async function confirmDelete() {
+        if (!deleteTarget) {
+          closeModal();
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/reservations/${deleteTarget}`,
+            {
+              method: "DELETE",
+            },
+          );
+          if (!response.ok) {
+            throw new Error("Delete failed");
+          }
+          await loadReservations();
+          updateStats();
+          showToast(
+            "Supprimée",
+            `La réservation ${deleteTarget} a été supprimée.`,
+          );
+        } catch (error) {
+          showToast("Erreur", "Impossible de supprimer la réservation.");
+        }
+        closeModal();
+      }
+      document
+        .getElementById("delete-modal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeModal();
+        });
+
+      /* ===== TOAST ===== */
+      let toastTimer;
+      function showToast(title, msg) {
+        clearTimeout(toastTimer);
+        document.getElementById("toast-title").textContent = title;
+        document.getElementById("toast-msg").textContent = msg;
+        const t = document.getElementById("toast");
+        t.classList.add("show");
+        toastTimer = setTimeout(() => t.classList.remove("show"), 3500);
+      }
+
+      /* ===== FORM ===== */
+      function selectClass(cls) {
+        selectedClass = cls;
+        ["eco", "prem", "vip"].forEach((c) => {
+          const card = document.getElementById("card-" + c);
+          card.classList.remove(
+            "selected-eco",
+            "selected-prem",
+            "selected-vip",
+          );
+        });
+        document.getElementById("card-" + cls).classList.add("selected-" + cls);
+      }
+
+      function openNewReservation() {
+        resetForm();
+        showPage("form");
+      }
+
+      function editReservation(id) {
+        const reservation = allReservations.find((r) => r.id === id);
+        if (!reservation) return;
+        editingReservationId = id;
+        const [nom, prenom] = reservation.nom.split(" ");
+        document.getElementById("f-nom").value = nom || "";
+        document.getElementById("f-prenom").value = prenom || "";
+        document.getElementById("f-depart-ville").value =
+          reservation.depart_ville || reservation.route.split(" → ")[0] || "";
+        document.getElementById("f-arrivee-ville").value =
+          reservation.arrivee_ville || reservation.route.split(" → ")[1] || "";
+        document.getElementById("f-date-dep").value =
+          reservation.date_depart || "";
+        document.getElementById("f-date-arr").value =
+          reservation.date_arrivee || "";
+        document.getElementById("f-motif").value = reservation.motif || "";
+        document.getElementById("f-statut").value =
+          reservation.statut || "pending";
+        selectClass(
+          reservation.classe === "Premium"
+            ? "prem"
+            : reservation.classe === "VIP"
+              ? "vip"
+              : "eco",
+        );
+        document.getElementById("form-submit-label").textContent =
+          "Mettre à jour la réservation";
+        showPage("form");
+      }
+
+      function cancelForm() {
+        resetForm();
+        showPage("home");
+      }
+
+      async function submitForm() {
+        const nom = document.getElementById("f-nom").value.trim();
+        const prenom = document.getElementById("f-prenom").value.trim();
+        const dep = document.getElementById("f-depart-ville").value.trim();
+        const arr = document.getElementById("f-arrivee-ville").value.trim();
+        const numVol = document.getElementById("f-num-vol").value.trim();
+        const depDate = document.getElementById("f-date-dep").value;
+        const arrDate = document.getElementById("f-date-arr").value;
+        const motif = document.getElementById("f-motif").value;
+        const statut = document.getElementById("f-statut").value || "pending";
+        const docType = document.getElementById("f-doc-type").value;
+        const bagages = document.getElementById("f-bagages").value;
+        const special = document.getElementById("f-special").value;
+        const notes = document.getElementById("f-notes").value.trim();
+
+        if (!nom || !prenom || !dep || !arr || !depDate || !motif) {
+          showToast(
+            "Champs manquants",
+            "Veuillez remplir tous les champs obligatoires.",
+          );
+          return;
+        }
+
+        const classeLabel = { eco: "Économique", prem: "Premium", vip: "VIP" };
+        const dateStr = new Date(depDate).toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+
+        const payload = {
+          nom: nom,
+          prenom: prenom,
+          document_id: document.getElementById("f-cni").value.trim(),
+          document_type: docType,
+          telephone: document.getElementById("f-tel").value.trim(),
+          email: document.getElementById("f-email").value.trim(),
+          depart_ville: dep,
+          arrivee_ville: arr,
+          vol_numero: numVol,
+          date_depart: depDate,
+          date_arrivee: arrDate,
+          motif: motif,
+          bagages: bagages,
+          classe: classeLabel[selectedClass] || "Économique",
+          statut: statut,
+          special: special,
+          notes: notes,
+          route: `${dep} → ${arr}`,
+          depart: dateStr,
+        };
+
+        try {
+          const endpoint = editingReservationId
+            ? `${API_BASE_URL}/reservations/${editingReservationId}`
+            : `${API_BASE_URL}/reservations`;
+          const method = editingReservationId ? "PUT" : "POST";
+          const response = await fetch(endpoint, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            throw new Error(errorBody?.message || "Erreur serveur");
+          }
+
+          const result = await response.json();
+          await loadReservations();
+          updateStats();
+          showToast(
+            editingReservationId
+              ? "Réservation mise à jour"
+              : "Réservation créée",
+            editingReservationId
+              ? `${editingReservationId} a été modifiée avec succès.`
+              : `${result.data.id} a été enregistrée avec succès.`,
+          );
+          resetForm();
+          setTimeout(() => showPage("home"), 900);
+        } catch (error) {
+          showToast(
+            "Erreur",
+            error.message || "Impossible d'enregistrer la réservation.",
+          );
+        }
+      }
+
+      function resetForm() {
+        [
+          "f-nom",
+          "f-prenom",
+          "f-cni",
+          "f-tel",
+          "f-email",
+          "f-depart-ville",
+          "f-arrivee-ville",
+          "f-num-vol",
+          "f-date-dep",
+          "f-date-arr",
+          "f-notes",
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        document.getElementById("f-doc-type").value =
+          "Carte nationale d'identité";
+        document.getElementById("f-bagages").value = "0 bagage";
+        document.getElementById("f-special").value = "Aucun";
+        document.getElementById("f-statut").value = "pending";
+        selectedClass = null;
+        editingReservationId = null;
+        document.getElementById("form-submit-label").textContent =
+          "Soumettre la Réservation";
+        ["eco", "prem", "vip"].forEach((c) => {
+          document
+            .getElementById("card-" + c)
+            .classList.remove("selected-eco", "selected-prem", "selected-vip");
+        });
+      }
+
+      /* init */
+      renderTable(tableData);
     </script>
   </body>
 </html>
